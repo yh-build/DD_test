@@ -12,21 +12,36 @@
       --text: #1f2328;
       --muted: #66707a;
       --line: #d8dee4;
-      --primary: #0f766e;
-      --primary-soft: #e8f6f4;
-      --green: #15803d;
-      --green-soft: #ecfdf5;
-      --blue: #2563eb;
-      --blue-soft: #eff6ff;
-      --amber: #b45309;
-      --amber-soft: #fffbeb;
-      --red: #b91c1c;
-      --red-soft: #fef2f2;
+      --primary: #1565a0;
+      --primary-soft: #e6f0f7;
+      --navy: #16336b;
+      --cyan: #1f8fbf;
+      --cyan-soft: #e3f1f8;
+      --green: #1d9268;
+      --green-soft: #e6f5ee;
+      --blue: #1f8fbf;
+      --blue-soft: #e3f1f8;
+      --amber: #b07d18;
+      --amber-soft: #fbf2db;
+      --red: #c33b2c;
+      --red-soft: #fbeae8;
       --shadow: 0 12px 28px rgba(31, 35, 40, 0.08);
     }
 
     * { box-sizing: border-box; }
     html { overflow-x: hidden; }
+
+    /* 접근성·폴리시 (UI Skills: frontend-design 'quality floor' + pbakaus/polish) */
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .button { transition: filter .15s, box-shadow .15s, transform .08s, background .15s, border-color .15s; }
+    .button:hover { box-shadow: 0 3px 10px rgba(31, 35, 40, 0.12); }
+    .button.primary:hover { filter: brightness(0.93); }
+    .button:not(.primary):hover { background: #f3f6f9; }
+    .nav button { transition: background .15s, color .15s, border-color .15s; }
+    .nav button:hover:not(.active) { background: #f0f3f6; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; scroll-behavior: auto !important; }
+    }
 
     body {
       margin: 0;

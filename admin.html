@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>DroneDocking SaaS 관리자 목업</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #66707a;
+      --line: #d8dee4;
+      --primary: #0f766e;
+      --primary-soft: #e8f6f4;
+      --green: #15803d;
+      --green-soft: #ecfdf5;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --amber: #b45309;
+      --amber-soft: #fffbeb;
+      --red: #b91c1c;
+      --red-soft: #fef2f2;
+      --shadow: 0 12px 28px rgba(31, 35, 40, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { overflow-x: hidden; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .login {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .login-panel {
+      width: min(430px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 32px;
+    }
+
+    .login-panel h1 {
+      margin: 0;
+      font-size: 29px;
+      letter-spacing: 0;
+    }
+
+    .login-panel p {
+      margin: 8px 0 28px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .fake-input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      min-height: 46px;
+    }
+
+    .real-input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      min-height: 46px;
+      font-size: 14px;
+      font-family: inherit;
+      width: 100%;
+    }
+    .real-input:focus { outline: none; border-color: var(--primary); }
+    .real-input:disabled { color: var(--muted); }
+
+    .real-select {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 9px 10px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 800;
+      width: 100%;
+      cursor: pointer;
+    }
+    .real-select:focus { outline: none; border-color: var(--primary); }
+
+    .login-foot {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .login-foot a {
+      color: var(--primary);
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 13px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .button.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .button.ghost { background: #fbfcfd; }
+    .button.sm { min-height: 32px; padding: 5px 10px; font-size: 12px; }
+    .button:active { transform: translateY(1px); }
+
+    .app { display: none; min-height: 100vh; }
+    body.authed .login { display: none; }
+    body.authed .app { display: block; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 24px;
+    }
+
+    .topbar-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .brand b { display: block; line-height: 1.15; }
+    .brand span { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .nav::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+    .top-actions { flex-shrink: 0; }
+
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 13px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .nav .ico { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .nav button.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .content {
+      width: min(1400px, 100%);
+      margin: 0 auto;
+      padding: 24px 28px 42px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .crumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .crumbs a { color: var(--primary); font-weight: 800; text-decoration: none; cursor: pointer; }
+    .crumbs span.sep { color: var(--line); }
+
+    .page-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .page-title p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 8px 18px rgba(31, 35, 40, 0.05);
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    h2, h3 { margin: 0 0 10px; letter-spacing: 0; }
+    h2 { font-size: 18px; }
+    h3 { font-size: 16px; }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .card-head h2 { margin: 0; }
+
+    .sub { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+
+    .metric { display: grid; gap: 6px; }
+    .metric .label { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .metric .value { font-size: 27px; font-weight: 900; letter-spacing: 0; }
+    .metric small { color: var(--muted); }
+
+    .tag,
+    .status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag { background: #f0f3f6; color: #3f4a54; }
+    .ok { background: var(--green-soft); color: var(--green); }
+    .info { background: var(--blue-soft); color: var(--blue); }
+    .warn { background: var(--amber-soft); color: var(--amber); }
+    .bad { background: var(--red-soft); color: var(--red); }
+    .soft { background: var(--primary-soft); color: var(--primary); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    th, td {
+      border-bottom: 1px solid #e7ebef;
+      padding: 10px 9px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      background: #fbfcfd;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    tr.row-link { cursor: pointer; }
+    tr.row-link:hover td { background: var(--primary-soft); }
+    td .linkish { color: var(--primary); font-weight: 800; }
+
+    .select-row,
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .select-box {
+      display: grid;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 11px;
+      min-height: 72px;
+    }
+
+    .select-box b { font-size: 14px; }
+    .select-box span { color: var(--muted); font-size: 12px; }
+
+    .steps { display: grid; gap: 10px; }
+
+    .step {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+    }
+
+    .step-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .step b { display: block; }
+    .step span { color: var(--muted); font-size: 12px; }
+
+    .chart { display: grid; gap: 10px; margin-top: 8px; }
+
+    .bar {
+      display: grid;
+      grid-template-columns: 95px 1fr 54px;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .track { height: 10px; border-radius: 999px; background: #edf1f5; overflow: hidden; }
+    .fill { height: 100%; width: var(--w); border-radius: 999px; background: var(--primary); }
+    .fill.blue { background: var(--blue); }
+    .fill.green { background: var(--green); }
+    .fill.amber { background: var(--amber); }
+
+    .notice {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 13px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .right-save { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+    .subtabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--line);
+      margin: 4px 0 18px;
+      flex-wrap: wrap;
+    }
+
+    .subtabs button {
+      border: 0;
+      background: transparent;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .subtabs button.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .subview { display: none; }
+    .subview.active { display: block; }
+
+    .modal-back {
+      position: fixed;
+      inset: 0;
+      background: rgba(31, 35, 40, 0.45);
+      display: none;
+      place-items: center;
+      z-index: 20;
+      padding: 24px;
+    }
+    .modal-back.open { display: grid; }
+
+    .modal {
+      width: min(520px, 100%);
+      background: var(--panel);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+    .modal h3 { margin: 0 0 4px; font-size: 18px; }
+    .modal .sub { margin-bottom: 16px; }
+
+    .detail-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 6px;
+    }
+    .detail-head h1 { margin: 0; font-size: 24px; }
+    .detail-head .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    @media (max-width: 980px) {
+      .page-title { display: grid; grid-template-columns: 1fr; }
+      .span-3, .span-4, .span-5, .span-6, .span-7, .span-8 { grid-column: span 12; }
+      .select-row, .form-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* 좁은 화면: 한 줄 유지 — 메뉴는 가로 스크롤, 브랜드·계정 칩은 압축 */
+    @media (max-width: 760px) {
+      .topbar-row { flex-wrap: nowrap; }
+      .brand > div:not(.mark) { display: none; }
+      .user-chip { font-size: 0; gap: 0; padding: 5px; }
+      .user-chip .avatar { font-size: 11px; }
+      .nav .lbl { display: none; }
+      .nav button { padding: 9px; min-width: 40px; }
+      /* 모바일 표 가로 스크롤바도 숨김 (드래그/터치 스크롤은 유지) */
+      .card { scrollbar-width: none; -ms-overflow-style: none; }
+      .card::-webkit-scrollbar { height: 0; display: none; }
+    }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 12px 16px; }
+      .content { padding: 18px 16px 32px; }
+      .login-panel { padding: 24px; }
+      .select-row, .form-grid { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 34px 1fr; }
+      .step .status { grid-column: 2; justify-self: start; }
+      .bar { grid-template-columns: 82px 1fr 44px; }
+      /* 표는 좁은 화면에서 가로 스크롤 (컬럼 정렬 유지) */
+      .card { overflow-x: auto; }
+      th, td { white-space: nowrap; }
+      .page-title h1 { font-size: 23px; }
+      .modal { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= 로그인 ================= -->
+  <section class="login">
+    <div class="login-panel">
+      <h1>DroneDocking</h1>
+      <p>관리자용 목업입니다. 회사 관리자로 로그인하면 프로젝트 생성, 현장·기준자료 등록, 참여자 권한 부여, 전체 분석·리포트를 관리합니다.</p>
+      <div class="field">
+        <label>아이디</label>
+        <div class="fake-input">admin01@future-ocean.kr</div>
+      </div>
+      <div class="field">
+        <label>비밀번호</label>
+        <div class="fake-input">••••••••••</div>
+      </div>
+      <button class="button primary" style="width: 100%;" onclick="login()">로그인</button>
+      <div class="login-foot">
+        <a onclick="alert('회원가입 화면(별도): 회사 관리자 계정을 먼저 만들고, 이후 관리자가 프로젝트 권한을 부여합니다.')">회사 관리자 회원가입</a>
+        <a onclick="alert('비밀번호 찾기 화면(별도): 가입 이메일로 재설정 링크를 보냅니다.')">비밀번호 찾기</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 앱 ================= -->
+  <main class="app">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div class="brand">
+          <div class="mark">DD</div>
+          <div>
+            <b>DroneDocking SaaS</b>
+            <span>관리자 화면 · (주)미래해양</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="관리자 메뉴">
+          <button data-nav="home" class="active" onclick="go('home')" title="관리자 홈"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span class="lbl">관리자 홈</span></button>
+          <button data-nav="projects" onclick="go('projects')" title="프로젝트 관리"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h6l2 2h10v11H3z"/></svg><span class="lbl">프로젝트 관리</span></button>
+          <button data-nav="analysis" onclick="go('analysis')" title="분석 현황"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 20v-6"/><path d="M12 20v-10"/><path d="M17 20v-4"/></svg><span class="lbl">분석 현황</span></button>
+          <button data-nav="reports" onclick="go('reports')" title="리포트"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg><span class="lbl">리포트</span></button>
+          <button data-nav="users" onclick="go('users')" title="사용자·권한"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-5.6 6.5-5.6s6.5 2 6.5 5.6"/><path d="M16 5.2a3 3 0 0 1 0 5.8"/><path d="M21.5 20c0-2.6-1.6-4.4-4-5"/></svg><span class="lbl">사용자·권한</span></button>
+          <button data-nav="account" onclick="go('account')" title="내 계정"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4 3.5-6.8 7.5-6.8s7.5 2.8 7.5 6.8"/></svg><span class="lbl">내 계정</span></button>
+        </nav>
+        <div class="top-actions">
+          <span class="user-chip"><span class="avatar">이</span>이관리 · 관리자</span>
+          <button class="button ghost" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ 관리자 홈 ============ -->
+      <section class="page active" id="page-home">
+        <div class="page-title">
+          <div>
+            <h1>관리자 홈</h1>
+            <p>관리자는 배정 여부와 무관하게 모든 프로젝트, 현장, 회차, 분석 상태를 조회합니다.</p>
+          </div>
+          <span class="tag">전체 프로젝트 조회 가능</span>
+        </div>
+
+        <div class="grid">
+          <div class="card span-3 metric">
+            <span class="label">전체 프로젝트</span>
+            <span class="value">3개</span>
+            <small>진행 2개, 준비 1개</small>
+          </div>
+          <div class="card span-3 metric">
+            <span class="label">전체 현장</span>
+            <span class="value">7개</span>
+            <small>기준자료 등록 6개</small>
+          </div>
+          <div class="card span-3 metric">
+            <span class="label">오늘 회차</span>
+            <span class="value">9회</span>
+            <small>경량 9회, 원본 6회 완료</small>
+          </div>
+          <div class="card span-3 metric">
+            <span class="label">관리 필요</span>
+            <span class="value">3건</span>
+            <small>오차 초과 1건, 원본 중단 2건</small>
+          </div>
+
+          <div class="card span-8">
+            <h2>전체 프로젝트 현황</h2>
+            <table>
+              <thead>
+                <tr><th>프로젝트</th><th>현장</th><th>참여자</th><th>최근 회차</th><th>평균 오차</th><th>상태</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>OO해수욕장, YY해안</td><td>김작업, 박작업</td><td>R-20260617-04</td><td>3.8cm</td><td><span class="status ok">정상</span></td></tr>
+                <tr><td>2026 연안침식 예비 실증</td><td>XX갯벌, ZZ사빈</td><td>최작업</td><td>R-20260616-02</td><td>5.8cm</td><td><span class="status warn">재촬영 검토</span></td></tr>
+                <tr><td>2027 해안선 모니터링 사업화 사전검토</td><td>AA항만, BB해변, CC방파제</td><td>미배정</td><td>준비 중</td><td>-</td><td><span class="status info">기준자료 등록 중</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-4">
+            <h2>전체 품질 지표</h2>
+            <p class="sub">관리자는 프로젝트 간 품질 편차를 보는 화면이 필요합니다.</p>
+            <div class="chart">
+              <div class="bar"><span>5cm 이내</span><div class="track"><div class="fill green" style="--w: 81%;"></div></div><b>81%</b></div>
+              <div class="bar"><span>3초 이내</span><div class="track"><div class="fill green" style="--w: 86%;"></div></div><b>86%</b></div>
+              <div class="bar"><span>원본 완료</span><div class="track"><div class="fill blue" style="--w: 67%;"></div></div><b>67%</b></div>
+              <div class="bar"><span>기준자료 완료</span><div class="track"><div class="fill green" style="--w: 86%;"></div></div><b>86%</b></div>
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <h2>전체 최근 회차</h2>
+            <table>
+              <thead>
+                <tr><th>프로젝트</th><th>현장</th><th>회차</th><th>작업자</th><th>경량 검증</th><th>원본 업로드</th><th>오차</th><th>판정</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>OO해수욕장</td><td>R-20260617-04</td><td>김작업</td><td><span class="status ok">완료</span></td><td><span class="status info">82%</span></td><td>3.6cm</td><td><span class="status ok">적합</span></td></tr>
+                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>YY해안</td><td>R-20260617-01</td><td>박작업</td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td>4.3cm</td><td><span class="status ok">적합</span></td></tr>
+                <tr><td>2026 연안침식 예비 실증</td><td>XX갯벌</td><td>R-20260616-02</td><td>최작업</td><td><span class="status warn">재촬영 권고</span></td><td><span class="status warn">재개 대기</span></td><td>5.8cm</td><td><span class="status warn">관리 필요</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 프로젝트 관리 ============ -->
+      <section class="page" id="page-projects">
+
+        <!-- 목록(게시판) 뷰 -->
+        <div class="view active" id="projects-list">
+          <div class="page-title">
+            <div>
+              <h1>프로젝트 관리</h1>
+              <p>프로젝트를 게시판처럼 관리합니다. 행을 누르면 해당 프로젝트로 들어가 현장 추가·기준자료 등록·참여자 배정을 진행합니다.</p>
+            </div>
+            <button class="button primary" onclick="openModal('new-project')">+ 프로젝트 생성</button>
+          </div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>프로젝트 목록</h2>
+              <span class="tag" id="project-count">총 3개</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>프로젝트</th><th>기간</th><th>현장</th><th>참여자</th><th>최근 회차</th><th>상태</th></tr>
+              </thead>
+              <tbody id="projects-tbody"><!-- JS --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 상세(drill-in) 뷰 -->
+        <div class="view" id="projects-detail">
+          <div class="crumbs">
+            <a onclick="showProjectsList()">프로젝트 관리</a>
+            <span class="sep">/</span>
+            <span id="crumb-project">프로젝트</span>
+          </div>
+
+          <div class="detail-head">
+            <div>
+              <h1 id="detail-project-name">프로젝트명</h1>
+              <div class="meta" id="detail-project-meta">기간 · 상태</div>
+            </div>
+            <button class="button ghost" onclick="showProjectsList()">← 목록으로</button>
+          </div>
+
+          <div class="subtabs">
+            <button class="active" data-sub="overview" onclick="subtab('overview')">개요</button>
+            <button data-sub="sites" onclick="subtab('sites')">현장 · 기준자료</button>
+            <button data-sub="members" onclick="subtab('members')">참여자 배정</button>
+          </div>
+
+          <!-- 개요 -->
+          <div class="subview active" id="sub-overview">
+            <div class="grid">
+              <div class="card span-3 metric"><span class="label">현장</span><span class="value" id="ov-sites">2개</span><small>기준자료 등록 현황</small></div>
+              <div class="card span-3 metric"><span class="label">참여자</span><span class="value" id="ov-members">2명</span><small>관리자가 권한 부여</small></div>
+              <div class="card span-3 metric"><span class="label">누적 회차</span><span class="value">18회</span><small>이번 주 5회</small></div>
+              <div class="card span-3 metric"><span class="label">평균 오차</span><span class="value">3.8cm</span><small>5cm 기준 적합</small></div>
+
+              <div class="card span-12">
+                <h2>최근 회차</h2>
+                <table>
+                  <thead><tr><th>현장</th><th>회차</th><th>작업자</th><th>경량</th><th>원본</th><th>오차</th><th>판정</th></tr></thead>
+                  <tbody id="detail-rounds"><!-- JS --></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 현장 · 기준자료 -->
+          <div class="subview" id="sub-sites">
+            <div class="grid">
+              <div class="card span-12">
+                <div class="card-head">
+                  <h2>현장 목록</h2>
+                  <button class="button primary sm" onclick="openModal('new-site')">+ 현장 추가</button>
+                </div>
+                <table>
+                  <thead><tr><th>현장명</th><th>좌표계</th><th>기준자료 버전</th><th>검증 상태</th><th>관리</th></tr></thead>
+                  <tbody id="detail-sites"><!-- JS --></tbody>
+                </table>
+              </div>
+
+              <div class="card span-12">
+                <h2>현장 추가 · 기준자료 등록</h2>
+                <p class="sub">현장 추가 버튼을 누르면 이 입력 영역이 열립니다. 회차가 바뀌어도 기준자료는 현장 기준으로 버전 관리합니다.</p>
+                <div class="form-grid">
+                  <div class="field"><label>소속 프로젝트</label><div class="fake-input" id="site-project">2026 TRL점프업 연안침식 PoC</div></div>
+                  <div class="field"><label>현장명</label><div class="fake-input">OO해수욕장</div></div>
+                  <div class="field"><label>좌표계</label><div class="fake-input">EPSG:5186</div></div>
+                  <div class="field"><label>GCP 기준점</label><div class="fake-input">GCP 목록 CSV 등록</div></div>
+                  <div class="field"><label>PPK/RTK 기준국</label><div class="fake-input">기준국 좌표 및 안테나고 등록</div></div>
+                  <div class="field"><label>기준 정사영상</label><div class="fake-input">GeoTIFF 또는 타일 세트 등록</div></div>
+                  <div class="field"><label>특징점 자료</label><div class="fake-input">육지부 Feature Point 목록 등록</div></div>
+                  <div class="field"><label>기준자료 버전</label><div class="fake-input">v1 · 2026-06-17부터 적용</div></div>
+                  <div class="field"><label>기준자료 검증 상태</label><div class="fake-input">관리자 확인 필요</div></div>
+                </div>
+                <div class="right-save"><button class="button primary">현장 및 기준자료 저장</button></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 참여자 배정 -->
+          <div class="subview" id="sub-members">
+            <div class="grid">
+              <div class="card span-12">
+                <div class="card-head">
+                  <h2>이 프로젝트의 참여자</h2>
+                  <button class="button primary sm" onclick="openModal('grant')">+ 참여자 추가</button>
+                </div>
+                <p class="sub">가입된 회사 구성원에게 이 프로젝트 접근 권한을 부여합니다. 권한이 없는 사용자는 프로젝트 목록에서 이 프로젝트를 볼 수 없습니다.</p>
+                <table>
+                  <thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>가능 메뉴</th><th>상태</th><th>관리</th></tr></thead>
+                  <tbody id="detail-members"><!-- JS --></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 전체 분석 ============ -->
+      <section class="page" id="page-analysis">
+        <div class="page-title">
+          <div>
+            <h1>분석 현황</h1>
+            <p>관리자는 전체 프로젝트-현장 단위로 원본 업로드, 정밀 정합, 최종 5cm 검증 상태를 봅니다.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card span-12">
+            <h2>전체 프로젝트-현장 필터</h2>
+            <div class="select-row">
+              <div class="select-box"><span>프로젝트</span><b>전체 프로젝트</b></div>
+              <div class="select-box"><span>현장</span><b>전체 현장</b></div>
+              <div class="select-box"><span>회차 상태</span><b>관리 필요 우선</b></div>
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>시스템 성능지표 달성 현황</h2>
+              <span class="tag">계획서 1단계 KPI · 정밀정합 완료 회차 집계</span>
+            </div>
+            <p class="sub">현장 재촬영 판정과 별개로, 원본 정밀정합이 끝난 회차를 모아 계획서 1단계 성능지표(5cm·3초·성공률) 달성률을 집계합니다. TTA 공인시험·외부 전문가 검토 증빙의 기준입니다.</p>
+            <div class="chart">
+              <div class="bar"><span>5cm 이내</span><div class="track"><div class="fill green" style="--w: 81%;"></div></div><b>81%</b></div>
+              <div class="bar"><span>3초 이내</span><div class="track"><div class="fill green" style="--w: 86%;"></div></div><b>86%</b></div>
+              <div class="bar"><span>동시 만족</span><div class="track"><div class="fill amber" style="--w: 84%;"></div></div><b>84%</b></div>
+              <div class="bar"><span>TTA 반복</span><div class="track"><div class="fill blue" style="--w: 60%;"></div></div><b>12/20회</b></div>
+            </div>
+            <table style="margin-top:14px">
+              <thead><tr><th>성능지표</th><th>목표치(계획서)</th><th>현재</th><th>달성</th></tr></thead>
+              <tbody>
+                <tr><td>위치 정합 오차</td><td>5cm 이하</td><td>평균 3.8cm · PASS 81%</td><td><span class="status ok">충족</span></td></tr>
+                <tr><td>실시간 처리 지연</td><td>3초 이하</td><td>평균 2.4초 · PASS 86%</td><td><span class="status ok">충족</span></td></tr>
+                <tr><td>현장 테스트 성공률</td><td>90% 이상</td><td>84% (오차·지연 동시 만족)</td><td><span class="status warn">목표 근접</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-12">
+            <h2>분석 처리 목록</h2>
+            <table>
+              <thead><tr><th>프로젝트</th><th>현장</th><th>회차</th><th>작업자</th><th>원본</th><th>정밀 정합</th><th>최종 오차</th><th>관리 판단</th></tr></thead>
+              <tbody>
+                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>OO해수욕장</td><td>R-20260617-04</td><td>김작업</td><td><span class="status info">82%</span></td><td><span class="status info">대기</span></td><td>예상 3.6cm</td><td><span class="status ok">진행 가능</span></td></tr>
+                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>YY해안</td><td>R-20260617-01</td><td>박작업</td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td>4.3cm</td><td><span class="status ok">최종 적합</span></td></tr>
+                <tr><td>2026 연안침식 예비 실증</td><td>XX갯벌</td><td>R-20260616-02</td><td>최작업</td><td><span class="status warn">재개 대기</span></td><td><span class="status info">보류</span></td><td>5.8cm</td><td><span class="status warn">재촬영 검토</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-6">
+            <h2>알고리즘 처리 상태</h2>
+            <div class="steps">
+              <div class="step"><div class="step-num">1</div><div><b>위치 판단 모듈</b><span>GNSS/RTK/PPK 로그와 GCP 기준자료 비교</span></div><span class="status ok">운영</span></div>
+              <div class="step"><div class="step-num">2</div><div><b>이미지 판단 모듈</b><span>흐림, 중복, 누락, 촬영 간격 검사</span></div><span class="status ok">운영</span></div>
+              <div class="step"><div class="step-num">3</div><div><b>지형 판단 모듈</b><span>기준 정사영상과 특징점 기반 변화 후보 산정</span></div><span class="status info">검증 중</span></div>
+            </div>
+          </div>
+
+          <div class="card span-6">
+            <h2>관리자 확인 항목</h2>
+            <table>
+              <tbody>
+                <tr><th>오차 초과</th><td>XX갯벌 R-20260616-02 · 5.8cm</td></tr>
+                <tr><th>원본 중단</th><td>2건 · 브라우저 재접속 필요</td></tr>
+                <tr><th>기준자료 검토</th><td>AA항만 기준자료 v1 승인 필요</td></tr>
+                <tr><th>TTA 검증 후보</th><td>OO해수욕장 20회 반복 중 12회 완료</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 리포트 ============ -->
+      <section class="page" id="page-reports">
+
+        <!-- 프로젝트 목록(게시판) 뷰 -->
+        <div class="view active" id="reports-list">
+          <div class="page-title">
+            <div>
+              <h1>리포트</h1>
+              <p>작업자와 동일하게 프로젝트를 게시판처럼 열어 리포트를 조회·다운로드합니다. 관리자는 모든 프로젝트의 리포트를 볼 수 있습니다.</p>
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>프로젝트 선택</h2>
+              <span class="tag">프로젝트를 누르면 리포트 목록이 열립니다</span>
+            </div>
+            <table>
+              <thead><tr><th>프로젝트</th><th>현장</th><th>리포트 수</th><th>다운로드 가능</th><th>상태</th></tr></thead>
+              <tbody id="reports-tbody"><!-- JS --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 프로젝트별 리포트(drill-in) 뷰 -->
+        <div class="view" id="reports-detail">
+          <div class="crumbs">
+            <a onclick="showReportsList()">리포트</a>
+            <span class="sep">/</span>
+            <span id="crumb-report">프로젝트</span>
+          </div>
+
+          <div class="detail-head">
+            <div>
+              <h1 id="detail-report-name">프로젝트명</h1>
+              <div class="meta">프로젝트 리포트 · 조회 및 다운로드</div>
+            </div>
+            <button class="button ghost" onclick="showReportsList()">← 목록으로</button>
+          </div>
+
+          <div class="grid">
+            <div class="card span-12">
+              <div class="card-head">
+                <h2>리포트 다운로드</h2>
+                <span class="tag">프로젝트 / 현장 / 회차 단위</span>
+              </div>
+              <p class="sub">현장·회차를 좁힐수록 받는 범위가 작아집니다. '전체'로 두면 상위 단위 전체를 묶어 받습니다. 분석 완료된 회차만 포함되며, 개별 문서는 아래 목록에서 따로 받을 수 있습니다.</p>
+              <div class="select-row">
+                <div class="select-box"><span>현장</span><select class="real-select" id="rep-f-site" onchange="fillRounds()"></select></div>
+                <div class="select-box"><span>회차</span><select class="real-select" id="rep-f-round" onchange="updateBundleLabel()"></select></div>
+                <div class="select-box" style="justify-content:center;align-items:center">
+                  <button class="button primary sm" id="bundle-btn" onclick="downloadBundle()">프로젝트 전체 받기 (ZIP)</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card span-12">
+              <h2>리포트 목록</h2>
+              <table>
+                <thead><tr><th>현장</th><th>회차</th><th>문서 유형</th><th>상태</th><th>담당자</th><th>다운로드</th></tr></thead>
+                <tbody id="detail-reports"><!-- JS --></tbody>
+              </table>
+            </div>
+
+            <div class="card span-6">
+              <h2>문서화 기준</h2>
+              <table>
+                <tbody>
+                  <tr><th>내부 검토</th><td>Word 또는 PDF</td></tr>
+                  <tr><th>외부 제출</th><td>제출처 양식에 따라 HWP 변환</td></tr>
+                  <tr><th>공인시험</th><td>TTA 시험 성적서 첨부</td></tr>
+                  <tr><th>증빙</th><td>처리 로그, 원본 업로드 로그, 기준자료 버전</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card span-6">
+              <h2>리포트 상태 안내</h2>
+              <p class="sub">리포트는 회차 분석 결과를 기준으로 자동 생성됩니다. 분석이 끝나야 다운로드할 수 있습니다.</p>
+              <table>
+                <tbody>
+                  <tr><td><span class="status info">분석 전</span></td><td>회차가 아직 없어 생성할 자료가 없음</td></tr>
+                  <tr><td><span class="status info">분석 중</span></td><td>정밀 정합·5cm 검증 진행 중, 잠시 후 가능</td></tr>
+                  <tr><td><span class="status warn">보류 · 재촬영 대기</span></td><td>오차 초과 등으로 결과 미확정, 재촬영 필요</td></tr>
+                  <tr><td><span class="status ok">다운로드 가능</span></td><td>분석 완료, PDF·Word·HWP로 받기 가능</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 사용자·권한 ============ -->
+      <section class="page" id="page-users">
+        <div class="page-title">
+          <div>
+            <h1>사용자·권한</h1>
+            <p>사용자가 회사 워크스페이스 접속을 요청하면 관리자가 승인합니다. 승인된 구성원만 회사 데이터에 접근할 수 있고, 프로젝트별 권한은 프로젝트 관리에서 따로 부여합니다.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card span-4 metric"><span class="label">승인 대기</span><span class="value">2명</span><small>가입 요청 후 대기</small></div>
+          <div class="card span-4 metric"><span class="label">활성 구성원</span><span class="value">4명</span><small>회사 접속 승인됨</small></div>
+          <div class="card span-4 metric"><span class="label">비활성</span><span class="value">1명</span><small>접속 차단됨</small></div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>회사 접속 승인 요청</h2>
+              <span class="tag warn">승인 대기 2건</span>
+            </div>
+            <p class="sub">로그인 화면에서 회사 코드로 가입을 요청한 사용자입니다. 승인하면 회사 구성원이 됩니다.</p>
+            <table>
+              <thead><tr><th>이름</th><th>이메일</th><th>요청일</th><th>요청 역할</th><th>관리</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>정신규</td><td>worker04@future-ocean.kr</td><td>2026-06-17</td><td>공통사용자</td>
+                  <td>
+                    <button class="button primary sm" onclick="alert('회사 접속 승인 — 목업')">승인</button>
+                    <button class="button sm" onclick="alert('가입 요청 거부 — 목업')">거부</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>한대기</td><td>worker05@future-ocean.kr</td><td>2026-06-16</td><td>공통사용자</td>
+                  <td>
+                    <button class="button primary sm" onclick="alert('회사 접속 승인 — 목업')">승인</button>
+                    <button class="button sm" onclick="alert('가입 요청 거부 — 목업')">거부</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>회사 구성원</h2>
+              <span class="tag">회사 접속 승인된 사용자</span>
+            </div>
+            <p class="sub">회사 데이터 접속 권한과 역할을 관리합니다. 프로젝트별 접근은 프로젝트 관리 &gt; 참여자 배정에서 부여합니다.</p>
+            <table>
+              <thead><tr><th>이름</th><th>역할</th><th>이메일</th><th>참여 프로젝트</th><th>회사 접속</th><th>관리</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>이관리</td><td><span class="status soft">관리자</span></td><td>admin01@future-ocean.kr</td>
+                  <td>전체</td><td><span class="status ok">활성</span></td><td><span class="tag">본인</span></td>
+                </tr>
+                <tr>
+                  <td>김작업</td><td>공통사용자</td><td>worker01@future-ocean.kr</td>
+                  <td>2개</td><td><span class="status ok">활성</span></td>
+                  <td><button class="button sm" onclick="alert('회사 접속 차단(비활성화) — 목업')">비활성화</button></td>
+                </tr>
+                <tr>
+                  <td>박작업</td><td>공통사용자</td><td>worker02@future-ocean.kr</td>
+                  <td>1개</td><td><span class="status ok">활성</span></td>
+                  <td><button class="button sm" onclick="alert('회사 접속 차단(비활성화) — 목업')">비활성화</button></td>
+                </tr>
+                <tr>
+                  <td>최작업</td><td>공통사용자</td><td>worker03@future-ocean.kr</td>
+                  <td>1개</td><td><span class="status ok">활성</span></td>
+                  <td><button class="button sm" onclick="alert('회사 접속 차단(비활성화) — 목업')">비활성화</button></td>
+                </tr>
+                <tr>
+                  <td>오퇴사</td><td>공통사용자</td><td>worker06@future-ocean.kr</td>
+                  <td>0개</td><td><span class="status bad">비활성</span></td>
+                  <td><button class="button primary sm" onclick="alert('회사 접속 재승인 — 목업')">재승인</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 내 계정 ============ -->
+      <section class="page" id="page-account">
+        <div class="page-title">
+          <div>
+            <h1>내 계정</h1>
+            <p>관리자도 본인 비밀번호 변경은 내 계정에서 처리합니다. 사용자 관리·권한 부여는 사용자·권한 메뉴에서 분리했습니다.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card span-5">
+            <h2>내 정보</h2>
+            <table>
+              <tbody>
+                <tr><th>이름</th><td>이관리</td></tr>
+                <tr><th>역할</th><td>관리자</td></tr>
+                <tr><th>이메일</th><td>admin01@future-ocean.kr</td></tr>
+                <tr><th>접근 범위</th><td>전체 프로젝트, 전체 현장, 전체 사용자</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-7">
+            <h2>비밀번호 재설정</h2>
+            <p class="sub">보안을 위해 현재 비밀번호를 먼저 확인해야 새 비밀번호를 설정할 수 있습니다.</p>
+
+            <div class="field" style="max-width:340px">
+              <label>현재 비밀번호</label>
+              <input type="password" class="real-input" id="cur-pw" placeholder="현재 비밀번호 입력" />
+            </div>
+            <div class="actions" id="pw-step1">
+              <button class="button primary" onclick="verifyPw()">확인</button>
+            </div>
+
+            <div id="pw-step2" style="display:none">
+              <div class="notice" style="margin:6px 0 16px;border-color:var(--green);color:var(--green);background:var(--green-soft)">현재 비밀번호 확인 완료. 새 비밀번호를 설정하세요.</div>
+              <div class="form-grid" style="grid-template-columns:1fr 1fr">
+                <div class="field"><label>새 비밀번호</label><input type="password" class="real-input" placeholder="10자 이상" /></div>
+                <div class="field"><label>새 비밀번호 확인</label><input type="password" class="real-input" placeholder="동일하게 입력" /></div>
+              </div>
+              <div class="actions"><button class="button primary" onclick="alert('비밀번호 변경 완료 — 목업')">비밀번호 변경</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= 모달 ================= -->
+  <div class="modal-back" id="modal-new-project">
+    <div class="modal">
+      <h3>프로젝트 생성</h3>
+      <p class="sub">게시판 글쓰기처럼 새 프로젝트를 등록합니다. 생성 후 프로젝트로 들어가 현장과 기준자료를 추가합니다.</p>
+      <div class="field"><label>프로젝트명</label><div class="fake-input">2026 신규 연안침식 실증</div></div>
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>시작일</label><div class="fake-input">2026-07-01</div></div>
+        <div class="field"><label>종료일</label><div class="fake-input">2027-03-31</div></div>
+      </div>
+      <div class="field"><label>설명</label><div class="fake-input">연안침식 관리 지역 PoC 검증</div></div>
+      <div class="actions">
+        <button class="button ghost" onclick="closeModal()">취소</button>
+        <button class="button primary" onclick="closeModal()">생성</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-back" id="modal-new-site">
+    <div class="modal">
+      <h3>현장 추가</h3>
+      <p class="sub">선택한 프로젝트에 현장을 추가하고 기준자료를 등록합니다.</p>
+      <div class="field"><label>소속 프로젝트</label><div class="fake-input" id="modal-site-project">2026 TRL점프업 연안침식 PoC</div></div>
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>현장명</label><div class="fake-input">새 현장</div></div>
+        <div class="field"><label>좌표계</label><div class="fake-input">EPSG:5186</div></div>
+      </div>
+      <div class="field"><label>기준자료</label><div class="fake-input">GCP·기준국·정사영상·특징점 등록</div></div>
+      <div class="actions">
+        <button class="button ghost" onclick="closeModal()">취소</button>
+        <button class="button primary" onclick="closeModal()">현장 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-back" id="modal-grant">
+    <div class="modal">
+      <h3>프로젝트 권한 부여</h3>
+      <p class="sub">회사 접속이 승인된 구성원 중에서 선택해 이 프로젝트 접근 권한을 부여합니다.</p>
+      <div class="field"><label>사용자 (회사 승인된 구성원)</label><div class="fake-input">박작업 · worker02@future-ocean.kr</div></div>
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="field"><label>프로젝트</label><div class="fake-input" id="modal-grant-project">2026 TRL점프업 연안침식 PoC</div></div>
+        <div class="field"><label>역할</label><div class="fake-input">공통사용자</div></div>
+      </div>
+      <div class="field"><label>가능 메뉴</label><div class="fake-input">현장 홈, 드론 측량, 분석, 리포트</div></div>
+      <div class="actions">
+        <button class="button ghost" onclick="closeModal()">취소</button>
+        <button class="button primary" onclick="closeModal()">권한 부여</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- 데이터(목업) ----------
+    const projects = {
+      p1: {
+        name: "2026 TRL점프업 연안침식 PoC",
+        period: "2026-06-01 ~ 2027-02-28",
+        status: { label: "진행", cls: "ok" },
+        lastRound: "R-20260617-04",
+        members: ["김작업", "박작업"],
+        sites: [
+          { name: "OO해수욕장", crs: "EPSG:5186", ver: "v1", verify: { label: "확인 필요", cls: "warn" } },
+          { name: "YY해안", crs: "EPSG:5186", ver: "v2", verify: { label: "승인", cls: "ok" } }
+        ],
+        rounds: [
+          ["OO해수욕장", "R-20260617-04", "김작업", ["완료","ok"], ["82%","info"], "3.6cm", ["적합","ok"]],
+          ["YY해안", "R-20260617-01", "박작업", ["완료","ok"], ["완료","ok"], "4.3cm", ["적합","ok"]]
+        ],
+        memberRows: [
+          ["김작업", "worker01@future-ocean.kr", "공통사용자", "현장 홈, 드론 측량, 분석, 리포트", ["활성","ok"]],
+          ["박작업", "worker02@future-ocean.kr", "공통사용자", "현장 홈, 드론 측량, 분석, 리포트", ["활성","ok"]]
+        ],
+        reports: [
+          ["OO해수욕장", "R-20260617-03", "5cm 검증 결과서", ["다운로드 가능","ok"], "박작업"],
+          ["YY해안", "R-20260617-01", "정합 결과 요약", ["다운로드 가능","ok"], "박작업"],
+          ["OO해수욕장", "R-20260617-04", "5cm 검증 결과서", ["분석 중","info"], "김작업"]
+        ]
+      },
+      p2: {
+        name: "2026 연안침식 예비 실증",
+        period: "2026-05-01 ~ 2026-12-31",
+        status: { label: "재촬영 검토", cls: "warn" },
+        lastRound: "R-20260616-02",
+        members: ["최작업"],
+        sites: [
+          { name: "XX갯벌", crs: "EPSG:5186", ver: "v1", verify: { label: "승인", cls: "ok" } },
+          { name: "ZZ사빈", crs: "EPSG:5186", ver: "v1", verify: { label: "확인 필요", cls: "warn" } }
+        ],
+        rounds: [
+          ["XX갯벌", "R-20260616-02", "최작업", ["재촬영 권고","warn"], ["재개 대기","warn"], "5.8cm", ["관리 필요","warn"]]
+        ],
+        memberRows: [
+          ["최작업", "worker03@future-ocean.kr", "공통사용자", "현장 홈, 드론 측량, 분석, 리포트", ["활성","ok"]]
+        ],
+        reports: [
+          ["XX갯벌", "R-20260616-02", "재촬영 권고서", ["다운로드 가능","ok"], "최작업"],
+          ["ZZ사빈", "R-20260615-01", "5cm 검증 결과서", ["보류 · 재촬영 대기","warn"], "최작업"]
+        ]
+      },
+      p3: {
+        name: "2027 해안선 모니터링 사업화 사전검토",
+        period: "2026-09-01 ~ 2027-03-31",
+        status: { label: "기준자료 등록 중", cls: "info" },
+        lastRound: "준비 중",
+        members: [],
+        sites: [
+          { name: "AA항만", crs: "EPSG:5186", ver: "v1", verify: { label: "승인 필요", cls: "warn" } },
+          { name: "BB해변", crs: "EPSG:5186", ver: "-", verify: { label: "미등록", cls: "info" } },
+          { name: "CC방파제", crs: "EPSG:5186", ver: "-", verify: { label: "미등록", cls: "info" } }
+        ],
+        rounds: [],
+        memberRows: [],
+        reports: [
+          ["AA항만", "회차 없음", "5cm 검증 결과서", ["분석 전","info"], "이관리"]
+        ]
+      }
+    };
+
+    function pill(arr) { return '<span class="status ' + arr[1] + '">' + arr[0] + '</span>'; }
+
+    // ---------- 인증 ----------
+    function login() { document.body.classList.add("authed"); }
+    function logout() { document.body.classList.remove("authed"); }
+
+    // ---------- 상단 내비게이션 ----------
+    function go(nav) {
+      document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.nav === nav));
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.getElementById("page-" + nav).classList.add("active");
+      if (nav === "projects") showProjectsList();
+      if (nav === "reports") showReportsList();
+      window.scrollTo(0, 0);
+    }
+
+    // ---------- 프로젝트 목록/상세 ----------
+    function showProjectsList() {
+      document.getElementById("projects-detail").classList.remove("active");
+      document.getElementById("projects-list").classList.add("active");
+      const tb = document.getElementById("projects-tbody");
+      tb.innerHTML = Object.keys(projects).map(id => {
+        const p = projects[id];
+        const sitesTxt = p.sites.map(s => s.name).join(", ");
+        const memTxt = p.members.length ? p.members.join(", ") : '<span class="status warn">미배정</span>';
+        return '<tr class="row-link" onclick="openProject(\'' + id + '\')">' +
+          '<td><span class="linkish">' + p.name + '</span></td>' +
+          '<td>' + p.period + '</td>' +
+          '<td>' + p.sites.length + '개</td>' +
+          '<td>' + memTxt + '</td>' +
+          '<td>' + p.lastRound + '</td>' +
+          '<td>' + pill([p.status.label, p.status.cls]) + '</td></tr>';
+      }).join("");
+      document.getElementById("project-count").textContent = "총 " + Object.keys(projects).length + "개";
+    }
+
+    function openProject(id) {
+      const p = projects[id];
+      document.getElementById("crumb-project").textContent = p.name;
+      document.getElementById("detail-project-name").textContent = p.name;
+      document.getElementById("detail-project-meta").textContent = p.period + " · " + p.status.label;
+      document.getElementById("ov-sites").textContent = p.sites.length + "개";
+      document.getElementById("ov-members").textContent = p.members.length + "명";
+      document.getElementById("site-project").textContent = p.name;
+      document.getElementById("modal-site-project").textContent = p.name;
+      document.getElementById("modal-grant-project").textContent = p.name;
+
+      document.getElementById("detail-rounds").innerHTML = p.rounds.length
+        ? p.rounds.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + pill(r[3]) + '</td><td>' + pill(r[4]) + '</td><td>' + r[5] + '</td><td>' + pill(r[6]) + '</td></tr>').join("")
+        : '<tr><td colspan="7" style="color:var(--muted)">아직 회차가 없습니다.</td></tr>';
+
+      document.getElementById("detail-sites").innerHTML = p.sites.map(s =>
+        '<tr><td>' + s.name + '</td><td>' + s.crs + '</td><td>' + s.ver + '</td><td>' + pill([s.verify.label, s.verify.cls]) + '</td>' +
+        '<td><button class="button sm" onclick="openModal(\'new-site\')">편집</button></td></tr>').join("");
+
+      document.getElementById("detail-members").innerHTML = p.memberRows.length
+        ? p.memberRows.map(m => '<tr><td>' + m[0] + '</td><td>' + m[1] + '</td><td>' + m[2] + '</td><td>' + m[3] + '</td><td>' + pill(m[4]) + '</td>' +
+            '<td><button class="button sm" style="border-color:var(--red);color:var(--red)" onclick="if(confirm(\'' + m[0] + ' 님을 이 프로젝트에서 제외합니다. (회사 접속 권한은 유지)\')){}">삭제</button></td></tr>').join("")
+        : '<tr><td colspan="6" style="color:var(--muted)">배정된 참여자가 없습니다. 우측 상단에서 추가하세요.</td></tr>';
+
+      subtab("overview");
+      document.getElementById("projects-list").classList.remove("active");
+      document.getElementById("projects-detail").classList.add("active");
+      window.scrollTo(0, 0);
+    }
+
+    function subtab(name) {
+      document.querySelectorAll("#projects-detail .subtabs button").forEach(b => b.classList.toggle("active", b.dataset.sub === name));
+      document.querySelectorAll("#projects-detail .subview").forEach(v => v.classList.remove("active"));
+      document.getElementById("sub-" + name).classList.add("active");
+    }
+
+    // ---------- 리포트 목록/상세 ----------
+    function showReportsList() {
+      document.getElementById("reports-detail").classList.remove("active");
+      document.getElementById("reports-list").classList.add("active");
+      const tb = document.getElementById("reports-tbody");
+      tb.innerHTML = Object.keys(projects).map(id => {
+        const p = projects[id];
+        const ready = p.reports.filter(r => r[3][1] === "ok").length;
+        let st;
+        if (ready === p.reports.length) st = pill(["전부 가능","ok"]);
+        else if (ready === 0) st = pill(["분석 중","info"]);
+        else st = pill(["일부 가능","warn"]);
+        return '<tr class="row-link" onclick="openReport(\'' + id + '\')">' +
+          '<td><span class="linkish">' + p.name + '</span></td>' +
+          '<td>' + p.sites.map(s => s.name).join(", ") + '</td>' +
+          '<td>' + p.reports.length + '건</td>' +
+          '<td>' + ready + ' / ' + p.reports.length + '건</td>' +
+          '<td>' + st + '</td></tr>';
+      }).join("");
+    }
+
+    let currentReportId = null;
+
+    function fillRounds() {
+      const p = projects[currentReportId];
+      if (!p) return;
+      const site = document.getElementById("rep-f-site").value;
+      const sel = document.getElementById("rep-f-round");
+      if (site === "__all") {
+        sel.innerHTML = '<option value="__all">전체 회차</option>';
+        sel.disabled = true;
+      } else {
+        const rounds = [...new Set(p.reports.filter(r => r[3][1] === "ok" && r[0] === site).map(r => r[1]))];
+        sel.innerHTML = '<option value="__all">전체 회차</option>' + rounds.map(r => '<option value="' + r + '">' + r + '</option>').join("");
+        sel.disabled = false;
+      }
+      updateBundleLabel();
+    }
+
+    function updateBundleLabel() {
+      const site = document.getElementById("rep-f-site").value;
+      const round = document.getElementById("rep-f-round").value;
+      const btn = document.getElementById("bundle-btn");
+      if (site === "__all") btn.textContent = "프로젝트 전체 받기 (ZIP)";
+      else if (round === "__all") btn.textContent = "현장 전체 받기 (ZIP)";
+      else btn.textContent = "회차 리포트 받기";
+    }
+
+    function downloadBundle() {
+      const p = projects[currentReportId];
+      const site = document.getElementById("rep-f-site").value;
+      const round = document.getElementById("rep-f-round").value;
+      let scope, count;
+      if (site === "__all") { scope = p.name + " 전체"; count = p.reports.filter(r => r[3][1] === "ok").length; }
+      else if (round === "__all") { scope = site + " 전체"; count = p.reports.filter(r => r[3][1] === "ok" && r[0] === site).length; }
+      else { scope = site + " · " + round; count = p.reports.filter(r => r[3][1] === "ok" && r[0] === site && r[1] === round).length; }
+      if (!count) { alert("선택 범위에 다운로드 가능한(분석 완료) 리포트가 없습니다."); return; }
+      alert(scope + " 리포트 " + count + "건 묶음 다운로드(ZIP) — 목업");
+    }
+
+    function openReport(id) {
+      const p = projects[id];
+      currentReportId = id;
+      document.getElementById("crumb-report").textContent = p.name;
+      document.getElementById("detail-report-name").textContent = p.name;
+      const sites = [...new Set(p.reports.map(r => r[0]))];
+      const siteSel = document.getElementById("rep-f-site");
+      siteSel.innerHTML = '<option value="__all">전체 현장</option>' + sites.map(s => '<option value="' + s + '">' + s + '</option>').join("");
+      fillRounds();
+      document.getElementById("detail-reports").innerHTML = p.reports.map(r => {
+        const ready = r[3][1] === "ok";
+        const btn = ready
+          ? '<button class="button sm" onclick="alert(\'리포트 다운로드(PDF/Word/HWP) — 목업\')">다운로드</button>'
+          : '<button class="button sm" disabled style="opacity:.5;cursor:not-allowed">분석 후 가능</button>';
+        return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + pill(r[3]) + '</td><td>' + r[4] + '</td>' +
+          '<td>' + btn + '</td></tr>';
+      }).join("");
+      document.getElementById("reports-list").classList.remove("active");
+      document.getElementById("reports-detail").classList.add("active");
+      window.scrollTo(0, 0);
+    }
+
+    // ---------- 비밀번호 재설정(2단계) ----------
+    function verifyPw() {
+      const inp = document.getElementById("cur-pw");
+      if (!inp.value) { alert("현재 비밀번호를 입력하세요."); inp.focus(); return; }
+      inp.disabled = true;
+      document.getElementById("pw-step1").style.display = "none";
+      document.getElementById("pw-step2").style.display = "block";
+    }
+
+    // ---------- 모달 ----------
+    function openModal(name) { document.getElementById("modal-" + name).classList.add("open"); }
+    function closeModal() { document.querySelectorAll(".modal-back").forEach(m => m.classList.remove("open")); }
+    document.querySelectorAll(".modal-back").forEach(m => m.addEventListener("click", e => { if (e.target === m) closeModal(); }));
+
+    // 초기 렌더
+    showProjectsList();
+    showReportsList();
+  </script>
+</body>
+</html>

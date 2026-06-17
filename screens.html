@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>DroneDocking SaaS 화면 구성안</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #66707a;
+      --line: #d8dee4;
+      --primary: #0f766e;
+      --primary-soft: #e8f6f4;
+      --green: #15803d;
+      --green-soft: #ecfdf5;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --amber: #b45309;
+      --amber-soft: #fffbeb;
+      --red: #b91c1c;
+      --red-soft: #fef2f2;
+      --shadow: 0 12px 28px rgba(31, 35, 40, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { overflow-x: hidden; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 28px;
+    }
+
+    .topbar-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .mark {
+      width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+      background: var(--primary); color: #fff; font-weight: 900;
+    }
+    .brand b { display: block; line-height: 1.15; }
+    .brand span { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .topbar-title { flex: 1; min-width: 200px; }
+    .topbar-title h1 { margin: 0; font-size: 18px; }
+    .topbar-title p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+    .user-chip {
+      border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px;
+      background: #fff; font-size: 12px; font-weight: 800; white-space: nowrap; flex-shrink: 0;
+    }
+
+    .navset { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+    .nav-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .nav-group-title {
+      color: var(--muted); font-size: 11px; font-weight: 900; white-space: nowrap;
+      padding: 3px 8px; border-radius: 999px; background: #f0f3f6;
+    }
+    .nav-item {
+      display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px;
+      padding: 7px 11px; color: var(--text); font-size: 13px; font-weight: 800; white-space: nowrap;
+    }
+    .nav-item.active { background: var(--primary-soft); border-color: #b9e8e2; color: var(--primary); }
+
+    main { max-width: 1320px; margin: 0 auto; padding: 24px 28px 48px; }
+
+    .notice {
+      border: 1px solid #bfdbfe; border-radius: 8px; background: var(--blue-soft);
+      color: #1e40af; padding: 12px 14px; font-size: 13px; font-weight: 700; margin-bottom: 18px;
+    }
+
+    .section { margin-bottom: 18px; }
+    .section-title { display: flex; align-items: baseline; gap: 10px; margin: 0 0 12px; }
+    .section-title h2 { margin: 0; font-size: 19px; }
+    .section-title p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .grid { display: grid; gap: 14px; }
+    .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: var(--shadow); padding: 18px;
+    }
+    .card h3 { margin: 0 0 4px; font-size: 16px; }
+    .card .sub { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+
+    .metric .label { color: var(--muted); font-size: 12px; font-weight: 900; }
+    .metric .value { font-size: 22px; font-weight: 900; margin: 4px 0; }
+    .metric .hint { color: var(--muted); font-size: 12px; }
+
+    .status {
+      display: inline-flex; align-items: center; justify-content: center; border-radius: 999px;
+      padding: 3px 9px; font-size: 12px; font-weight: 900; white-space: nowrap;
+    }
+    .ok { background: var(--green-soft); color: var(--green); }
+    .info { background: var(--blue-soft); color: var(--blue); }
+    .warn { background: var(--amber-soft); color: var(--amber); }
+    .bad { background: var(--red-soft); color: var(--red); }
+    .soft { background: var(--primary-soft); color: var(--primary); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e7ebef; text-align: left; padding: 10px 8px; vertical-align: top; }
+    th { color: var(--muted); background: #fbfcfd; font-size: 12px; font-weight: 900; }
+    tr:last-child td { border-bottom: 0; }
+
+    .flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    .step {
+      border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fbfcfd; min-height: 110px;
+    }
+    .step .n {
+      width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+      background: var(--primary); color: #fff; font-weight: 900; font-size: 13px; margin-bottom: 8px;
+    }
+    .step b { display: block; margin-bottom: 4px; font-size: 13px; }
+    .step span { color: var(--muted); font-size: 12px; }
+
+    .flow3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .page-card { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fbfcfd; }
+    .page-card h3 { margin: 0 0 8px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .page-card ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+    .page-card li { margin-bottom: 3px; }
+
+    @media (max-width: 980px) {
+      .two, .three, .flow, .flow3 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .topbar { padding: 12px 16px; }
+      main { padding: 18px 16px 32px; }
+      .two, .three, .flow, .flow3 { grid-template-columns: 1fr; }
+      .card { overflow-x: auto; }
+      th, td { white-space: nowrap; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="mark">DD</div>
+        <div>
+          <b>DroneDocking SaaS</b>
+          <span>화면 구성안</span>
+        </div>
+      </div>
+      <div class="topbar-title">
+        <h1>연안침식 드론 측량 SaaS</h1>
+        <p>상단 메뉴 기반으로 관리자 업무와 공통사용자 업무를 나누는 1단계(PoC·PoM) 화면 설계안입니다.</p>
+      </div>
+      <span class="user-chip">로그인 후 역할별 메뉴 노출</span>
+    </div>
+
+    <div class="navset" aria-label="현재 메뉴 구조">
+      <div class="nav-group">
+        <span class="nav-group-title">작업자(공통사용자)</span>
+        <span class="nav-item active">현장 홈</span>
+        <span class="nav-item">드론 측량</span>
+        <span class="nav-item">분석</span>
+        <span class="nav-item">리포트</span>
+        <span class="nav-item">내 계정</span>
+      </div>
+      <div class="nav-group">
+        <span class="nav-group-title">관리자</span>
+        <span class="nav-item">관리자 홈</span>
+        <span class="nav-item">프로젝트 관리</span>
+        <span class="nav-item">분석 현황</span>
+        <span class="nav-item">리포트</span>
+        <span class="nav-item">사용자·권한</span>
+        <span class="nav-item">내 계정</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice">
+      실제로 클릭해 보는 목업은 <b>07_SaaS_작업자_목업.html</b> · <b>08_SaaS_관리자_목업.html</b> 입니다. 이 문서는 두 화면의 메뉴 구조와 흐름을 설명하는 구성안입니다.
+    </div>
+
+    <!-- 메뉴 구조 -->
+    <section class="section">
+      <div class="section-title"><h2>메뉴 구조</h2><p>메뉴는 적게 유지하고, 하위 동작은 각 페이지 안의 카드·탭·드릴인으로 처리합니다.</p></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>역할</th><th>메뉴</th><th>핵심 목적</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="5"><span class="status soft">작업자</span></td><td>현장 홈</td><td>배정된 프로젝트의 최근 회차·업로드 상태·오차·지연·판정 확인</td></tr>
+            <tr><td>드론 측량</td><td>회차 생성 → 파일 업로드 → 정합 시각화 → 재촬영 판정(현장 즉시판정)</td></tr>
+            <tr><td>분석</td><td>배정 현장의 원본 처리·정밀 정합·최종 5cm 검증 조회</td></tr>
+            <tr><td>리포트</td><td>게시판처럼 프로젝트 진입 → 회차별 결과 문서 조회·다운로드</td></tr>
+            <tr><td>내 계정</td><td>본인 정보 + 현재 비밀번호 확인 후 재설정(2단계)</td></tr>
+            <tr><td rowspan="6"><span class="status soft">관리자</span></td><td>관리자 홈</td><td>전체 프로젝트·현장·회차·관리 필요 항목 대시보드</td></tr>
+            <tr><td>프로젝트 관리</td><td>프로젝트 생성(게시판) → 진입 → 현장·기준자료 추가 → 참여자 배정</td></tr>
+            <tr><td>분석 현황</td><td>전체 분석 + <b>시스템 성능지표(5cm·3초·성공률)</b> 달성 집계</td></tr>
+            <tr><td>리포트</td><td>전체 프로젝트 리포트 조회·다운로드(프로젝트/현장/회차 단위)</td></tr>
+            <tr><td>사용자·권한</td><td>회사 접속 가입 요청 <b>승인</b> + 구성원 관리(프로젝트 권한은 프로젝트 관리에서)</td></tr>
+            <tr><td>내 계정</td><td>본인 정보 + 비밀번호 재설정(2단계)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 권한 모델 -->
+    <section class="section">
+      <div class="section-title"><h2>권한 모델</h2><p>가입은 셀프, 회사 접속은 관리자 승인, 프로젝트 접근은 프로젝트별 부여 — 3단계로 분리합니다.</p></div>
+      <div class="flow flow3">
+        <div class="step">
+          <div class="n">1</div><b>회사 코드로 가입 요청</b>
+          <span>사용자가 로그인 화면에서 회사 코드로 직접 가입을 요청합니다. (셀프)</span>
+        </div>
+        <div class="step">
+          <div class="n">2</div><b>회사 접속 승인</b>
+          <span>관리자가 <b>사용자·권한</b>에서 가입 요청을 승인하면 회사 구성원이 됩니다. 거부·비활성화도 여기서.</span>
+        </div>
+        <div class="step">
+          <div class="n">3</div><b>프로젝트 권한 부여</b>
+          <span>관리자가 <b>프로젝트 관리 &gt; 참여자 배정</b>에서 구성원을 특정 프로젝트에 추가합니다. 한 사람이 여러 프로젝트 가능.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 프로젝트 구조 -->
+    <section class="section">
+      <div class="section-title"><h2>프로젝트 구조와 기준자료</h2></div>
+      <div class="grid three">
+        <div class="card metric"><div class="label">데이터 계층</div><div class="value">프로젝트 → 현장 → 회차</div><div class="hint">프로젝트 아래 여러 현장, 각 현장에 반복 측량 회차가 쌓입니다.</div></div>
+        <div class="card metric"><div class="label">기준자료 위치</div><div class="value">현장 기준 · 버전 관리</div><div class="hint">GCP·검사점·계획 조사범위·기준 정사영상·특징점·좌표계를 현장에 버전으로 등록합니다.</div></div>
+        <div class="card metric"><div class="label">회차와 기준자료</div><div class="value">촬영 당시 버전 참조</div><div class="hint">회차는 생성 시점의 기준자료 버전을 참조해 재현성을 확보합니다.</div></div>
+      </div>
+    </section>
+
+    <!-- 단계적 업로드 -->
+    <section class="section">
+      <div class="section-title"><h2>단계적 업로드 흐름</h2><p>경량 데이터로 먼저 빠르게 판정하고, 원본은 같은 회차에 이어 올립니다. (드론 측량 화면)</p></div>
+      <div class="flow">
+        <div class="step"><div class="n">1</div><b>회차 생성</b><span>회차 명칭 입력(조석·고도 등) 후 생성</span></div>
+        <div class="step"><div class="n">2</div><b>파일·폴더 선택</b><span>현장 PC에서 촬영 파일 또는 폴더 선택</span></div>
+        <div class="step"><div class="n">3</div><b>업로드 시작</b><span>경량 패키지 생성·전송 시작</span></div>
+        <div class="step"><div class="n">4</div><b>경량화</b><span>축소 이미지·위치 로그·구성 내역 생성(진행 표시)</span></div>
+        <div class="step"><div class="n">5</div><b>빠른 검증</b><span>조사범위·누락 영역·재촬영 1차 판단(진행 표시)</span></div>
+        <div class="step"><div class="n">6</div><b>원본 업로드</b><span>백그라운드 전송, 브라우저 닫히면 재개 대기</span></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <p class="sub" style="margin:0">원본 업로드 완료 후 서버에서 <b>정밀 정합 → 5cm 최종 검증 → 정사영상/3D 후처리</b>가 수행되며, 그 결과는 <b>분석</b> 화면에서 확정됩니다.</p>
+      </div>
+    </section>
+
+    <!-- 두 지표 분리 -->
+    <section class="section">
+      <div class="section-title"><h2>재촬영 지표 vs 시스템 성능지표</h2><p>현장 의사결정용 지표와 과제 검증용 KPI를 분리합니다 — 섞으면 안 됩니다.</p></div>
+      <div class="grid two">
+        <div class="card">
+          <h3>재촬영 지표 <span class="status warn">현장 · 작업자 드론 측량</span></h3>
+          <p class="sub">"이 회차를 다시 찍어야 하나"를 경량 데이터로 즉시 판단. 룰 기반(결정적), 학습데이터 불필요.</p>
+          <table>
+            <tbody>
+              <tr><td>조사범위 커버리지 / 누락 영역</td><td><span class="status ok">통과</span> · <span class="status warn">주의</span></td></tr>
+              <tr><td>중복도(종/횡) · 이미지 품질(흐림·중복)</td><td>임계값 점검</td></tr>
+              <tr><td>GCP 검출·정합 · RTK 위치품질</td><td>마커/품질 점검</td></tr>
+              <tr><td>1차 정합 오차(현장 추정)</td><td>5cm 초과 추정 시 재촬영</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>시스템 성능지표 <span class="status soft">검증 KPI · 관리자 분석 현황</span></h3>
+          <p class="sub">정밀정합 완료 회차를 집계해 계획서 목표 달성을 증빙. TTA·외부 전문가 검토 기준.</p>
+          <table>
+            <thead><tr><th>지표</th><th>목표(계획서)</th></tr></thead>
+            <tbody>
+              <tr><td>위치 정합 오차</td><td><b>5cm 이하</b></td></tr>
+              <tr><td>실시간 처리 지연(종단간)</td><td><b>3초 이하</b></td></tr>
+              <tr><td>현장 테스트 성공률(오차·지연 동시)</td><td><b>90% 이상</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 리포트 -->
+    <section class="section">
+      <div class="section-title"><h2>리포트</h2><p>게시판처럼 프로젝트로 진입해 받습니다. 작업자·관리자 동일한 진입 방식.</p></div>
+      <div class="grid two">
+        <div class="card">
+          <h3>다운로드 단위와 상태</h3>
+          <p class="sub">프로젝트/현장/회차 단위로 받거나(ZIP), 문서 1건씩 받습니다. 분석이 끝나야 받을 수 있습니다.</p>
+          <table>
+            <tbody>
+              <tr><td><span class="status info">분석 전</span></td><td>회차가 없어 생성할 자료 없음</td></tr>
+              <tr><td><span class="status info">분석 중</span></td><td>정합·5cm 검증 진행 중, 잠시 후 가능</td></tr>
+              <tr><td><span class="status warn">보류·재촬영 대기</span></td><td>오차 초과 등으로 미확정</td></tr>
+              <tr><td><span class="status ok">다운로드 가능</span></td><td>분석 완료, 받기 가능</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>문서 형식</h3>
+          <p class="sub">국내 R&D·공공 제출과 시험 증빙을 고려한 출력 전략.</p>
+          <table>
+            <thead><tr><th>형식</th><th>용도</th></tr></thead>
+            <tbody>
+              <tr><td>HWP</td><td>국내 R&D·공공 제출 양식 대응</td></tr>
+              <tr><td>DOCX</td><td>내부 편집·공동 작업</td></tr>
+              <tr><td>PDF</td><td>최종 배포·검수·제출 증빙</td></tr>
+              <tr><td>CSV / JSON</td><td>TTA 시험·성능 검증 원자료</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 데이터 역할 분리 -->
+    <section class="section">
+      <div class="section-title"><h2>데이터 역할 분리</h2><p>사용자 경험(빠른 판정)과 검증 정확도(정밀)를 동시에 맞추기 위한 분리.</p></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>데이터</th><th>용도</th></tr></thead>
+          <tbody>
+            <tr><td><span class="status soft">경량 데이터</span></td><td>빠른 업로드, 구성 내역 검증, 조사범위·누락·재촬영 1차 판단(현장 즉시판정)</td></tr>
+            <tr><td><span class="status info">원본 데이터</span></td><td>정밀 정합, 5cm 최종 검증, 정사영상/3D 후처리, 알고리즘 개선 후 재처리</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

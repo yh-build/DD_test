@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>DroneDocking SaaS 작업자 목업 · 고급</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#eaf3f9; --muted:#9fb8c8; --line:rgba(255,255,255,.12);
+      --primary:#3ec8e6; --primary-soft:rgba(62,200,230,.16);
+      --navy:#0c2a44; --cyan:#3ec8e6;
+      --green:#5fe0a8; --green-soft:rgba(46,204,113,.16);
+      --blue:#6fd9f2; --blue-soft:rgba(62,200,230,.16);
+      --amber:#f0c45f; --amber-soft:rgba(230,170,40,.16);
+      --red:#ff9b8f; --red-soft:rgba(230,80,70,.18);
+      --card:rgba(255,255,255,.045);
+      --ease:cubic-bezier(.32,.72,0,1);
+      --shadow:0 30px 70px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    html{overflow-x:hidden;color-scheme:dark}
+    :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+    body{
+      margin:0;min-height:100dvh;color:var(--ink);line-height:1.55;
+      font-family:"Plus Jakarta Sans","Noto Sans KR",sans-serif;
+      background:
+        radial-gradient(50% 40% at 15% 8%, rgba(62,200,230,.16), transparent 60%),
+        radial-gradient(45% 40% at 88% 14%, rgba(33,99,150,.30), transparent 60%),
+        radial-gradient(55% 50% at 80% 100%, rgba(20,150,170,.12), transparent 60%),
+        #061a2e;
+      background-attachment:fixed;
+    }
+
+    .login{min-height:100dvh;display:grid;place-items:center;padding:24px}
+    .login-panel{width:min(440px,100%);background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:34px;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+    .login-panel h1{margin:0;font-size:30px;letter-spacing:-.02em;font-weight:800}
+    .login-panel p{margin:8px 0 26px;color:var(--muted);font-size:14px}
+    .field{display:grid;gap:7px;margin-bottom:14px}
+    .field label{color:#c4d6e2;font-size:12px;font-weight:700}
+    .fake-input{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:13px;min-height:46px;color:var(--ink)}
+    .real-input{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:13px;min-height:46px;font-size:14px;font-family:inherit;width:100%;color:var(--ink)}
+    .real-input:focus{outline:none;border-color:rgba(62,200,230,.6);box-shadow:0 0 0 4px rgba(62,200,230,.15)}
+    .real-input:disabled{color:var(--muted)}
+    .real-select{border:1px solid var(--line);border-radius:12px;background:rgba(10,30,50,.6);padding:9px 10px;font-size:14px;font-family:inherit;font-weight:700;width:100%;color:var(--ink);cursor:pointer}
+    .real-select:focus{outline:none;border-color:rgba(62,200,230,.6)}
+    .real-select option{background:#0a2236;color:var(--ink)}
+    .login-foot{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+    .login-foot a{color:var(--primary);font-weight:700;text-decoration:none;cursor:pointer}
+
+    .button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;border:1px solid var(--line);border-radius:12px;padding:9px 14px;background:rgba(255,255,255,.05);color:var(--ink);font-size:14px;font-weight:700;font-family:inherit;text-decoration:none;cursor:pointer;white-space:nowrap;transition:transform .08s var(--ease),box-shadow .3s,background .25s,border-color .25s,filter .25s}
+    .button:hover{background:rgba(255,255,255,.09);box-shadow:0 6px 18px rgba(0,0,0,.3)}
+    .button:active{transform:translateY(1px)}
+    .button.primary{background:linear-gradient(150deg,#5fd6ef,#2aa6cf);color:#06202f;border-color:transparent;font-weight:800}
+    .button.primary:hover{filter:brightness(1.06);box-shadow:0 10px 26px rgba(62,200,230,.3)}
+    .button.ghost{background:rgba(255,255,255,.04)}
+    .button.sm{min-height:32px;padding:5px 10px;font-size:12px}
+
+    .app{display:none;min-height:100dvh}
+    body.authed .login{display:none}
+    body.authed .app{display:block}
+    .topbar{position:sticky;top:0;z-index:5;background:rgba(6,26,46,.7);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line);padding:10px 24px}
+    .topbar-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .mark{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-weight:800;color:#06202f;background:linear-gradient(150deg,#5fd6ef,#3ec8e6);box-shadow:0 8px 18px rgba(62,200,230,.3)}
+    .brand b{display:block;line-height:1.15;font-weight:800}
+    .brand span{color:var(--muted);font-size:12px;font-weight:600}
+    .top-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex-shrink:0}
+    .user-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.05);padding:7px 11px;font-size:12px;font-weight:700;white-space:nowrap}
+    .avatar{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,#5fd6ef,#3ec8e6);color:#06202f;font-weight:800}
+    .nav{display:flex;align-items:center;gap:8px;margin-top:0;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+    .nav::-webkit-scrollbar{width:0;height:0;display:none}
+    .nav button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;border:1px solid transparent;border-radius:12px;padding:9px 13px;background:transparent;color:var(--muted);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
+    .nav button:hover:not(.active){background:rgba(255,255,255,.05);color:var(--ink)}
+    .nav button.active{border-color:rgba(62,200,230,.4);background:var(--primary-soft);color:var(--primary)}
+    .nav .ico{width:18px;height:18px;flex-shrink:0}
+
+    .content{width:min(1400px,100%);margin:0 auto;padding:26px 28px 48px}
+    .page{display:none}.page.active{display:block;animation:pgfade .5s var(--ease) both}
+    @keyframes pgfade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .view{display:none}.view.active{display:block}
+    .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:12px}
+    .crumbs a{color:var(--primary);font-weight:700;text-decoration:none;cursor:pointer}
+    .crumbs span.sep{color:var(--line)}
+    .page-title{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+    .page-title h1{margin:0;font-size:27px;letter-spacing:-.02em;font-weight:800}
+    .page-title p{margin:6px 0 0;color:var(--muted);font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 40px rgba(0,0,0,.28);padding:18px;min-width:0;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-5{grid-column:span 5}.span-6{grid-column:span 6}.span-7{grid-column:span 7}.span-8{grid-column:span 8}.span-12{grid-column:span 12}
+    h2,h3{margin:0 0 10px;letter-spacing:-.01em}h2{font-size:18px;font-weight:800}h3{font-size:16px;font-weight:700}
+    .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.card-head h2{margin:0}
+    .sub{margin:0 0 14px;color:var(--muted);font-size:13px}
+    .metric{display:grid;gap:6px}.metric .label{color:var(--muted);font-size:12px;font-weight:700}.metric .value{font-size:26px;font-weight:800;letter-spacing:-.02em}.metric small{color:var(--muted)}
+
+    .tag,.status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800;white-space:nowrap}
+    .tag{background:rgba(255,255,255,.08);color:#cfe0ea}
+    .ok{background:var(--green-soft);color:var(--green)}
+    .info{background:var(--blue-soft);color:var(--blue)}
+    .warn{background:var(--amber-soft);color:var(--amber)}
+    .bad{background:var(--red-soft);color:var(--red)}
+    .soft{background:var(--primary-soft);color:var(--primary)}
+
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:11px 9px;text-align:left;vertical-align:middle}
+    th{color:var(--muted);font-size:12px;font-weight:800;background:rgba(255,255,255,.03)}
+    tr:last-child td{border-bottom:0}
+    tr.row-link{cursor:pointer}tr.row-link:hover td{background:var(--primary-soft)}
+    td .linkish{color:var(--primary);font-weight:700}
+
+    .select-row,.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .select-box{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);padding:11px;min-height:72px}
+    .select-box b{font-size:14px}.select-box span{color:var(--muted);font-size:12px}
+
+    .steps{display:grid;gap:10px}
+    .step{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);padding:12px}
+    .step-num{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(150deg,#5fd6ef,#3ec8e6);color:#06202f;font-weight:800}
+    .step b{display:block}.step span{color:var(--muted);font-size:12px}
+
+    .chart{display:grid;gap:10px;margin-top:8px}
+    .bar{display:grid;grid-template-columns:96px 1fr 52px;gap:10px;align-items:center;font-size:12px;color:var(--muted)}
+    .track{height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden}
+    .fill{height:100%;width:var(--w);border-radius:999px;background:var(--primary)}
+    .fill.blue{background:var(--blue)}.fill.green{background:var(--green)}.fill.amber{background:var(--amber)}
+
+    .notice{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:13px;color:var(--muted);font-size:13px}
+    .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .right-save{display:flex;justify-content:flex-end;margin-top:12px}
+
+    .subtabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:4px 0 18px;flex-wrap:wrap}
+    .subtabs button{border:0;background:transparent;padding:10px 14px;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit}
+    .subtabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+    .subview{display:none}.subview.active{display:block}
+
+    .detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:6px}
+    .detail-head h1{margin:0;font-size:24px;font-weight:800}.detail-head .meta{color:var(--muted);font-size:13px;margin-top:4px}
+
+    .modal-back{position:fixed;inset:0;background:rgba(2,12,22,.6);backdrop-filter:blur(4px);display:none;place-items:center;z-index:20;padding:24px}
+    .modal-back.open{display:grid}
+    .modal{width:min(520px,100%);background:rgba(12,32,52,.92);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:24px;backdrop-filter:blur(20px)}
+    .modal h3{margin:0 0 4px;font-size:18px;font-weight:800}.modal .sub{margin-bottom:16px}
+
+    .picker-list{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:12px}
+    .picker-item{padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;font-weight:700}
+    .picker-item:last-child{border-bottom:0}.picker-item:hover{background:var(--primary-soft)}
+    .picker-item small{display:block;color:var(--muted);font-weight:500;font-size:12px}
+    .picker-empty{padding:16px;color:var(--muted);font-size:13px;text-align:center}
+    .pick-val{font-size:14px;font-weight:800}.pick-val.empty{color:var(--muted);font-weight:500}
+
+    .upl-step{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);padding:12px;margin-bottom:10px}
+    .upl-head{display:flex;align-items:center;gap:10px}.upl-head b{flex:1;font-size:14px}.upl-head .step-num{width:28px;height:28px;border-radius:8px;font-size:13px}
+    .upl-step .track{margin-top:10px}.upl-pct{font-size:12px;font-weight:800;color:var(--muted);min-width:38px;text-align:right}
+
+    .areachart{position:relative}.areachart svg{width:100%;max-width:520px;height:auto;display:block;margin:0 auto}
+    .chart-tip{position:absolute;transform:translate(-50%,-135%);background:#0c2a44;border:1px solid var(--line);color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:3}
+    .chart-tip::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#0c2a44}
+
+    .image-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .thumb{aspect-ratio:4/3;border:1px solid var(--line);border-radius:10px;background:linear-gradient(135deg,rgba(62,200,230,.18),rgba(31,143,191,.08)),repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 14px,rgba(255,255,255,.02) 14px 28px);display:flex;align-items:end;padding:8px;color:#cfe0ea;font-size:12px;font-weight:700}
+
+    @media (max-width:980px){.span-3,.span-4,.span-5,.span-6,.span-7,.span-8{grid-column:span 12}.select-row,.form-grid{grid-template-columns:1fr 1fr}}
+    @media (max-width:760px){.topbar-row{flex-wrap:nowrap}.brand>div:not(.mark){display:none}.user-chip{font-size:0;gap:0;padding:5px}.user-chip .avatar{font-size:11px}.nav .lbl{display:none}.nav button{padding:9px;min-width:40px}}
+    @media (max-width:720px){.card>div[style*="1fr 1fr"]{grid-template-columns:1fr !important}}
+    @media (max-width:640px){.topbar{padding:12px 16px}.content{padding:18px 16px 32px}.login-panel{padding:24px}.select-row,.form-grid{grid-template-columns:1fr}.step{grid-template-columns:34px 1fr}.step .status{grid-column:2;justify-self:start}.card{overflow-x:auto;scrollbar-width:none}.card::-webkit-scrollbar{height:0;display:none}th,td{white-space:nowrap}.page-title h1{font-size:23px}.modal{padding:18px}.image-grid{grid-template-columns:1fr 1fr}.bar{grid-template-columns:78px 1fr 46px}}
+    @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.001ms !important;animation-duration:.001ms !important;scroll-behavior:auto !important}}
+
+  </style>
+</head>
+<body>
+
+  <!-- ================= 로그인 ================= -->
+  <section class="login">
+    <div class="login-panel">
+      <h1>DroneDocking</h1>
+      <p>작업자용 목업입니다. 로그인 이후 배정된 프로젝트의 현장 작업, 분석, 리포트만 확인합니다.</p>
+      <div class="field">
+        <label>아이디</label>
+        <div class="fake-input">worker01@miraeocean.com</div>
+      </div>
+      <div class="field">
+        <label>비밀번호</label>
+        <div class="fake-input">••••••••••</div>
+      </div>
+      <button class="button primary" style="width: 100%;" onclick="login()">로그인</button>
+      <div class="login-foot">
+        <a onclick="alert('회원가입 화면(별도): 회사 코드로 가입을 요청하면 관리자 승인 후 사용할 수 있습니다.')">회사 코드로 가입 요청</a>
+        <a onclick="alert('비밀번호 찾기 화면(별도): 가입 이메일로 재설정 링크를 보냅니다.')">비밀번호 찾기</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 앱 ================= -->
+  <main class="app">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div class="brand">
+          <div class="mark">DD</div>
+          <div>
+            <b>DroneDocking SaaS</b>
+            <span>작업자 화면 · 공통사용자</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="작업자 메뉴">
+          <button data-nav="home" class="active" onclick="go('home')" title="현장 홈"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span class="lbl">현장 홈</span></button>
+          <button data-nav="survey" onclick="go('survey')" title="드론 측량"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span class="lbl">드론 측량</span></button>
+          <button data-nav="analysis" onclick="go('analysis')" title="분석"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 20v-6"/><path d="M12 20v-10"/><path d="M17 20v-4"/></svg><span class="lbl">분석</span></button>
+          <button data-nav="reports" onclick="go('reports')" title="리포트"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg><span class="lbl">리포트</span></button>
+          <button data-nav="account" onclick="go('account')" title="내 계정"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4 3.5-6.8 7.5-6.8s7.5 2.8 7.5 6.8"/></svg><span class="lbl">내 계정</span></button>
+        </nav>
+        <div class="top-actions">
+          <span class="user-chip"><span class="avatar">김</span>김작업 · 공통사용자</span>
+          <button class="button ghost" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ 현장 홈 ============ -->
+      <section class="page active" id="page-home">
+        <div class="page-title">
+          <div>
+            <h1>현장 홈</h1>
+            <p>김작업에게 배정된 프로젝트와 현장 회차만 보여줍니다. 권한이 없는 프로젝트는 표시되지 않습니다.</p>
+          </div>
+          <button class="button primary" onclick="go('survey')">드론 측량 시작</button>
+        </div>
+
+        <div class="grid">
+          <div class="card span-3 metric"><span class="label">배정 프로젝트</span><span class="value">2개</span><small>현장 3개</small></div>
+          <div class="card span-3 metric"><span class="label">오늘 업로드 회차</span><span class="value">4회</span><small>경량 4회, 원본 3회 완료</small></div>
+          <div class="card span-3 metric"><span class="label">평균 정합 오차</span><span class="value">3.8cm</span><small>목표 5cm 이내</small></div>
+          <div class="card span-3 metric"><span class="label">평균 지연</span><span class="value">2.4초</span><small>목표 3초 이내</small></div>
+
+          <div class="card span-12">
+            <h2>내 배정 프로젝트</h2>
+            <p class="sub">프로젝트를 누르면 그 프로젝트의 현장과 최근 회차로 이동합니다.</p>
+            <table>
+              <thead><tr><th>프로젝트</th><th>현장</th><th>최근 회차</th><th>평균 오차</th><th>상태</th></tr></thead>
+              <tbody>
+                <tr class="row-link" onclick="go('survey')"><td><span class="linkish">2026 TRL점프업 연안침식 PoC</span></td><td>OO해수욕장, YY해안</td><td>R-20260617-04</td><td>3.8cm</td><td><span class="status ok">정상</span></td></tr>
+                <tr class="row-link" onclick="go('survey')"><td><span class="linkish">2026 연안침식 예비 실증</span></td><td>XX갯벌</td><td>R-20260616-02</td><td>5.8cm</td><td><span class="status warn">재촬영 검토</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-12">
+            <h2>최근 회차</h2>
+            <table>
+              <thead><tr><th>프로젝트</th><th>현장</th><th>회차</th><th>업로드일자</th><th>업로드 상태</th><th>오차</th><th>지연</th><th>판정</th></tr></thead>
+              <tbody>
+                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>OO해수욕장</td><td>R-20260617-04</td><td>2026-06-17 15:10</td><td><span class="status info">원본 82%</span></td><td>3.6cm</td><td>2.2초</td><td><span class="status ok">적합</span></td></tr>
+                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>OO해수욕장</td><td>R-20260617-03</td><td>2026-06-17 14:05</td><td><span class="status ok">완료</span></td><td>4.1cm</td><td>2.8초</td><td><span class="status ok">적합</span></td></tr>
+                <tr><td>2026 연안침식 예비 실증</td><td>XX갯벌</td><td>R-20260616-02</td><td>2026-06-16 16:20</td><td><span class="status warn">재개 대기</span></td><td>5.8cm</td><td>3.4초</td><td><span class="status warn">재촬영 권고</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-6">
+            <h2>오차 추이</h2>
+            <p class="sub">5cm 기준선을 넘는 회차는 재촬영 또는 기준자료 확인 대상으로 표시합니다. (점에 마우스를 올리면 값 표시)</p>
+            <div class="areachart">
+              <svg viewBox="0 0 480 200" role="img" aria-label="오차 추이 영역 차트">
+                <defs>
+                  <linearGradient id="errgrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#3ec8e6" stop-opacity="0.24"/>
+                    <stop offset="1" stop-color="#3ec8e6" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <!-- 그리드 + y축 라벨 -->
+                <g stroke="rgba(255,255,255,0.10)" stroke-width="1">
+                  <line x1="40" y1="40.6" x2="460" y2="40.6"/>
+                  <line x1="40" y1="83.1" x2="460" y2="83.1"/>
+                  <line x1="40" y1="125.5" x2="460" y2="125.5"/>
+                  <line x1="40" y1="168" x2="460" y2="168"/>
+                </g>
+                <g fill="#9fb8c8" font-size="9" text-anchor="end" font-family="sans-serif">
+                  <text x="33" y="43">6</text><text x="33" y="86">4</text><text x="33" y="128">2</text>
+                </g>
+                <!-- 5cm 기준선 -->
+                <line x1="40" y1="61.8" x2="460" y2="61.8" stroke="#b07d18" stroke-width="1" stroke-dasharray="4 4"/>
+                <text x="460" y="57" text-anchor="end" fill="#b07d18" font-size="9.5" font-weight="800" font-family="sans-serif">5cm 기준</text>
+                <!-- 영역 + 곡선 -->
+                <path d="M40,102.2 C57.5,99.7 110,94.7 145,87.3 C180,79.9 215,64.7 250,57.6 C285,50.5 320,39.2 355,44.9 C390,50.6 442.5,83.8 460,91.6 L460,168 L40,168 Z" fill="url(#errgrad)"/>
+                <path d="M40,102.2 C57.5,99.7 110,94.7 145,87.3 C180,79.9 215,64.7 250,57.6 C285,50.5 320,39.2 355,44.9 C390,50.6 442.5,83.8 460,91.6" fill="none" stroke="#3ec8e6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                <!-- 포인트 -->
+                <g stroke="#fff" stroke-width="1.6">
+                  <circle cx="40" cy="102.2" r="3.4" fill="#3ec8e6"/>
+                  <circle cx="145" cy="87.3" r="3.4" fill="#3ec8e6"/>
+                  <circle cx="250" cy="57.6" r="3.4" fill="#b07d18"/>
+                  <circle cx="355" cy="44.9" r="3.4" fill="#b07d18"/>
+                  <circle cx="460" cy="91.6" r="3.4" fill="#3ec8e6"/>
+                </g>
+                <!-- 호버 영역 -->
+                <g fill="transparent" style="cursor:pointer">
+                  <circle cx="40" cy="102.2" r="16" onmousemove="chartTip(event,'06-13 · 3.1cm')" onmouseleave="chartTipHide(event)"/>
+                  <circle cx="145" cy="87.3" r="16" onmousemove="chartTip(event,'06-14 · 3.8cm')" onmouseleave="chartTipHide(event)"/>
+                  <circle cx="250" cy="57.6" r="16" onmousemove="chartTip(event,'06-15 · 5.2cm · 기준 초과')" onmouseleave="chartTipHide(event)"/>
+                  <circle cx="355" cy="44.9" r="16" onmousemove="chartTip(event,'06-16 · 5.8cm · 기준 초과')" onmouseleave="chartTipHide(event)"/>
+                  <circle cx="460" cy="91.6" r="16" onmousemove="chartTip(event,'06-17 · 3.6cm')" onmouseleave="chartTipHide(event)"/>
+                </g>
+                <!-- x축 라벨 -->
+                <g fill="var(--muted)" font-size="9.5" text-anchor="middle" font-family="sans-serif">
+                  <text x="40" y="190">06-13</text>
+                  <text x="145" y="190">06-14</text>
+                  <text x="250" y="190">06-15</text>
+                  <text x="355" y="190">06-16</text>
+                  <text x="460" y="190">06-17</text>
+                </g>
+              </svg>
+              <div class="chart-tip"></div>
+            </div>
+          </div>
+
+          <div class="card span-6">
+            <h2>현장 판단 그래프</h2>
+            <p class="sub">의사결정에 바로 필요한 지표를 우선 배치합니다.</p>
+            <div class="chart">
+              <div class="bar"><span>적합 회차</span><div class="track"><div class="fill green" style="--w: 78%;"></div></div><b>78%</b></div>
+              <div class="bar"><span>원본 완료</span><div class="track"><div class="fill blue" style="--w: 71%;"></div></div><b>71%</b></div>
+              <div class="bar"><span>누락 없음</span><div class="track"><div class="fill green" style="--w: 84%;"></div></div><b>84%</b></div>
+              <div class="bar"><span>3초 이내</span><div class="track"><div class="fill green" style="--w: 88%;"></div></div><b>88%</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 드론 측량 ============ -->
+      <section class="page" id="page-survey">
+        <div class="page-title">
+          <div>
+            <h1>드론 측량</h1>
+            <p>회차를 생성하고 경량 데이터를 먼저 올린 뒤, 브라우저가 켜져 있으면 원본 업로드를 이어갑니다.</p>
+          </div>
+          <span class="tag">배정 현장만 선택 가능</span>
+        </div>
+
+        <div class="grid">
+          <div class="card span-12">
+            <h2>1. 프로젝트와 현장 선택</h2>
+            <p class="sub">내게 배정된 프로젝트와 현장만 검색·선택할 수 있습니다. 항목이 많아지면 검색으로 빠르게 찾습니다.</p>
+            <div class="select-row">
+              <div class="select-box">
+                <span>프로젝트</span>
+                <b class="pick-val" id="sv-project-name">—</b>
+                <button class="button sm" style="margin-top:6px" onclick="openPicker('project')">선택 / 변경</button>
+              </div>
+              <div class="select-box">
+                <span>현장</span>
+                <b class="pick-val" id="sv-site-name">—</b>
+                <button class="button sm" style="margin-top:6px" onclick="openPicker('site')">선택 / 변경</button>
+              </div>
+              <div class="select-box"><span>기준자료</span><b>GCP/PPK 기준자료 v1 사용</b></div>
+            </div>
+          </div>
+
+          <div class="card span-7">
+            <h2>2. 회차 생성 및 업로드</h2>
+            <p class="sub">회차를 만들고 파일을 올리면 경량화 → 빠른 검증 → 원본 업로드 순서로 진행됩니다.</p>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">1</span><b>회차 생성</b><span class="status info" id="us-create-st">대기</span></div>
+              <div class="field" style="margin:10px 0 0">
+                <label>회차 명칭</label>
+                <div style="display:flex;gap:8px">
+                  <input class="real-input" id="us-name" placeholder="예: R-20260617-04 (조석 중간 · 고도 80m)" />
+                  <button class="button primary" style="flex-shrink:0" onclick="uplCreate()">생성</button>
+                </div>
+              </div>
+              <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+                <div class="field" style="margin:0">
+                  <label>촬영일자</label>
+                  <input type="date" class="real-input" id="us-date" value="2026-06-17" />
+                </div>
+                <div class="field" style="margin:0">
+                  <label>촬영 시각</label>
+                  <input type="time" class="real-input" id="us-time" value="15:10" />
+                </div>
+              </div>
+            </div>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">2</span><b>파일 · 폴더 선택</b><span class="status info" id="us-pick-st">대기</span></div>
+              <div class="actions" style="justify-content:flex-start;margin-top:10px;align-items:center">
+                <button class="button" onclick="uplPick('file')">파일 선택</button>
+                <button class="button" onclick="uplPick('folder')">폴더 선택</button>
+                <span id="us-pick-info" style="color:var(--muted);font-size:13px"></span>
+              </div>
+            </div>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">3</span><b>업로드 시작</b><span class="status info" id="us-start-st">대기</span></div>
+              <div class="actions" style="justify-content:flex-start;margin-top:10px">
+                <button class="button primary" id="us-start" onclick="uplStart()">업로드 시작</button>
+              </div>
+            </div>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">4</span><b>경량화</b><span class="upl-pct" id="us-light-pct">0%</span></div>
+              <div class="track"><div class="fill" id="us-light-bar" style="--w:0%"></div></div>
+            </div>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">5</span><b>빠른 검증</b><span class="upl-pct" id="us-fast-pct">0%</span></div>
+              <div class="track"><div class="fill green" id="us-fast-bar" style="--w:0%"></div></div>
+            </div>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">6</span><b>원본 업로드</b><span class="upl-pct" id="us-orig-pct">0%</span></div>
+              <div class="track"><div class="fill blue" id="us-orig-bar" style="--w:0%"></div></div>
+              <p class="sub" style="margin:8px 0 0">브라우저가 열려 있으면 백그라운드로 이어 전송, 닫히면 재개 대기됩니다.</p>
+            </div>
+          </div>
+
+          <div class="card span-5">
+            <h2>Mission Package 검증</h2>
+            <table>
+              <tbody>
+                <tr><th>파일 구성</th><td><span class="status ok">정상</span></td></tr>
+                <tr><th>구성 내역</th><td>촬영 418장, 위치 로그 1개, 체크섬 일치</td></tr>
+                <tr><th>조사 범위</th><td>계획 범위 대비 96%</td></tr>
+                <tr><th>누락 영역</th><td>북동쪽 1개 구간 후보</td></tr>
+                <tr><th>재촬영 판단</th><td><span class="status ok">필수 아님</span></td></tr>
+              </tbody>
+            </table>
+            <div class="notice" style="margin-top: 12px;">
+              원본은 최종 5cm 검증과 정사영상/3D 후처리에 필요하므로, 경량 판정 이후에도 같은 회차에 계속 업로드합니다.
+            </div>
+          </div>
+
+          <div class="card span-8">
+            <h2>이미지 조회</h2>
+            <p class="sub">원본 전체가 아니라 경량 썸네일과 품질 라벨(정상·중복·흐림·누락 인접)을 먼저 확인합니다. 라벨이 아래 판정 조건과 연결됩니다.</p>
+            <div class="image-grid">
+              <div class="thumb">IMG_2401 정상</div>
+              <div class="thumb">IMG_2402 정상</div>
+              <div class="thumb">IMG_2403 중복</div>
+              <div class="thumb">IMG_2404 흐림</div>
+              <div class="thumb">IMG_2405 정상</div>
+              <div class="thumb">IMG_2406 정상</div>
+              <div class="thumb">IMG_2407 누락 인접</div>
+              <div class="thumb">IMG_2408 정상</div>
+            </div>
+          </div>
+
+          <div class="card span-4">
+            <h2>종합 판정</h2>
+            <div style="margin-bottom:10px"><span class="status ok" style="font-size:14px;padding:6px 12px">현장 작업 가능</span></div>
+            <table>
+              <tbody>
+                <tr><th>예상 오차</th><td>3.6cm</td></tr>
+                <tr><th>예상 지연</th><td>2.2초</td></tr>
+                <tr><th>경고 항목</th><td>누락 후보 1, 흐림·중복 2</td></tr>
+                <tr><th>조치</th><td>북동쪽 후보 구간만 육안 확인</td></tr>
+              </tbody>
+            </table>
+            <div class="notice" style="margin-top:12px">
+              <b>재촬영 권고 기준</b><br />
+              위치 불일치 · 중복도 부족 · 누락 영역 · 정합 오차 5cm 초과 · GCP 미검출 중 하나라도 해당되면 사유와 함께 재촬영을 권고합니다.
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>정합 시각화 <span class="tag" style="vertical-align:middle">이미지 기반</span></h2>
+              <span class="tag">경량 데이터 미리보기</span>
+            </div>
+            <p class="sub">정합은 촬영 이미지에서 GCP 마커와 육지부 특징점을 검출해 기준 정사영상·기준좌표와 맞추는 과정입니다. 아래에서 GCP 정합 결과와 조사범위 커버리지를 이미지로 확인합니다.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <figure style="margin:0">
+                <svg viewBox="0 0 400 280" width="100%" style="display:block;border:1px solid var(--line);border-radius:8px;background:#eef4f5">
+                  <defs>
+                    <linearGradient id="seaA" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#dbe9ee"/><stop offset="1" stop-color="#cfe1e8"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="0" y="0" width="400" height="280" fill="url(#seaA)"/>
+                  <path d="M0,168 C80,150 150,184 220,166 C300,146 350,176 400,160 L400,280 L0,280 Z" fill="#e7e2d3"/>
+                  <path d="M0,168 C80,150 150,184 220,166 C300,146 350,176 400,160" fill="none" stroke="#b9b08f" stroke-width="2"/>
+                  <g fill="#1565a0">
+                    <circle cx="40" cy="166" r="2.3"/><circle cx="92" cy="158" r="2.3"/><circle cx="148" cy="180" r="2.3"/>
+                    <circle cx="210" cy="167" r="2.3"/><circle cx="268" cy="150" r="2.3"/><circle cx="330" cy="166" r="2.3"/><circle cx="378" cy="160" r="2.3"/>
+                  </g>
+                  <!-- GCP 마커 -->
+                  <g stroke="#1d9268" stroke-width="2" fill="none">
+                    <g><line x1="66" y1="120" x2="84" y2="120"/><line x1="75" y1="111" x2="75" y2="129"/><circle cx="75" cy="120" r="6"/></g>
+                    <g><line x1="176" y1="92" x2="194" y2="92"/><line x1="185" y1="83" x2="185" y2="101"/><circle cx="185" cy="92" r="6"/></g>
+                    <g><line x1="291" y1="118" x2="309" y2="118"/><line x1="300" y1="109" x2="300" y2="127"/><circle cx="300" cy="118" r="6"/></g>
+                    <g><line x1="111" y1="208" x2="129" y2="208"/><line x1="120" y1="199" x2="120" y2="217"/><circle cx="120" cy="208" r="6"/></g>
+                    <g><line x1="306" y1="210" x2="324" y2="210"/><line x1="315" y1="201" x2="315" y2="219"/><circle cx="315" cy="210" r="6"/></g>
+                  </g>
+                  <g fill="#1d9268" font-size="9.5" font-weight="700" font-family="sans-serif">
+                    <text x="86" y="123">GCP-1 2.1cm</text>
+                    <text x="196" y="95">GCP-2 1.8cm</text>
+                    <text x="232" y="121">GCP-3 2.4cm</text>
+                    <text x="131" y="211">GCP-4 2.0cm</text>
+                    <text x="247" y="213">GCP-5 1.9cm</text>
+                  </g>
+                  <!-- 검사점 -->
+                  <g>
+                    <rect x="229" y="159" width="12" height="12" transform="rotate(45 235 165)" fill="none" stroke="#16336b" stroke-width="2"/>
+                    <text x="246" y="168" fill="#16336b" font-size="9.5" font-weight="700" font-family="sans-serif">검사점 3.6cm</text>
+                  </g>
+                  <!-- 범례 -->
+                  <g font-family="sans-serif" font-size="10" font-weight="700">
+                    <rect x="8" y="8" width="150" height="58" rx="6" fill="#ffffff" opacity="0.88" stroke="#d8dee4"/>
+                    <g stroke="#1d9268" stroke-width="2" fill="none"><line x1="18" y1="22" x2="30" y2="22"/><line x1="24" y1="16" x2="24" y2="28"/></g>
+                    <text x="38" y="25" fill="#3f4a54">GCP 검출·정합</text>
+                    <rect x="19" y="34" width="9" height="9" transform="rotate(45 23.5 38.5)" fill="none" stroke="#16336b" stroke-width="2"/>
+                    <text x="38" y="42" fill="#3f4a54">검사점(검증)</text>
+                    <circle cx="24" cy="55" r="3" fill="#1565a0"/>
+                    <text x="38" y="58" fill="#3f4a54">육지부 특징점</text>
+                  </g>
+                </svg>
+                <figcaption style="margin-top:8px;color:var(--muted);font-size:12px;font-weight:800">GCP 5/5점 검출·정합 · 검사점 잔차 3.6cm (≤ 5cm) → <span style="color:var(--green)">통과</span></figcaption>
+              </figure>
+
+              <figure style="margin:0">
+                <svg viewBox="0 0 400 280" width="100%" style="display:block;border:1px solid var(--line);border-radius:8px;background:#f2f6f7">
+                  <defs>
+                    <pattern id="hatchA" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+                      <rect width="8" height="8" fill="#fffbeb"/><line x1="0" y1="0" x2="0" y2="8" stroke="#b07d18" stroke-width="2"/>
+                    </pattern>
+                  </defs>
+                  <!-- 계획 조사범위 -->
+                  <rect x="40" y="38" width="320" height="207" rx="10" fill="none" stroke="#3f4a54" stroke-width="2" stroke-dasharray="7 6"/>
+                  <!-- 촬영 footprint -->
+                  <path d="M40,38 L300,38 L300,92 L360,92 L360,245 L40,245 Z" fill="rgba(21,101,160,0.16)" stroke="#1565a0" stroke-width="2"/>
+                  <!-- 누락 후보 -->
+                  <path d="M300,38 H360 V92 H300 Z" fill="url(#hatchA)" stroke="#b07d18" stroke-width="1.5"/>
+                  <text x="44" y="30" fill="#3f4a54" font-size="11" font-weight="800" font-family="sans-serif">계획 조사범위</text>
+                  <text x="150" y="160" fill="#1565a0" font-size="12" font-weight="800" font-family="sans-serif">촬영 footprint</text>
+                  <text x="150" y="178" fill="#1565a0" font-size="11" font-weight="700" font-family="sans-serif">커버리지 96%</text>
+                  <text x="330" y="68" fill="#b07d18" font-size="10" font-weight="800" font-family="sans-serif" text-anchor="middle">누락 후보</text>
+                  <text x="330" y="82" fill="#b07d18" font-size="10" font-weight="800" font-family="sans-serif" text-anchor="middle">북동 1구간</text>
+                </svg>
+                <figcaption style="margin-top:8px;color:var(--muted);font-size:12px;font-weight:800">조사범위 커버리지 96% · 북동 1구간 누락 후보 → <span style="color:var(--amber)">주의 · 육안 확인</span></figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <h2>재촬영 판정 지표 <span class="tag" style="vertical-align:middle">현장 즉시판정</span></h2>
+            <p class="sub">경량 패키지 기반으로 "이 회차를 다시 찍어야 하는가"를 현장에서 즉시 판단하는 지표입니다. 트리거가 하나라도 걸리면 사유와 함께 재촬영을 권고합니다.</p>
+            <table>
+              <thead><tr><th>점검 항목</th><th>측정값(추정)</th><th>재촬영 트리거</th><th>판정</th></tr></thead>
+              <tbody>
+                <tr><td>조사범위 커버리지(위치)</td><td>96%</td><td>계획 조사범위 미달 · 공백 발생</td><td><span class="status ok">통과</span></td></tr>
+                <tr><td>누락 영역</td><td>북동 1구간 후보</td><td>누락 구간 존재</td><td><span class="status warn">주의 · 육안 확인</span></td></tr>
+                <tr><td>중복도(종/횡)</td><td>76% / 66%</td><td>중복 부족으로 정합 불가</td><td><span class="status ok">통과</span></td></tr>
+                <tr><td>이미지 품질</td><td>흐림 1, 중복 1</td><td>흐림·중복·결손 과다</td><td><span class="status warn">주의</span></td></tr>
+                <tr><td>GCP 검출·정합</td><td>5/5점 식별, 잔차 2.1cm</td><td>GCP 미검출 · 식별 실패</td><td><span class="status ok">통과</span></td></tr>
+                <tr><td>RTK 위치품질</td><td>RTK Fix</td><td>Float / None (PPK 보강 필요)</td><td><span class="status ok">통과</span></td></tr>
+                <tr><td>1차 정합 오차(현장 추정)</td><td>추정 3.6cm</td><td>5cm 초과 추정</td><td><span class="status ok">통과</span></td></tr>
+              </tbody>
+            </table>
+            <div class="notice" style="margin-top:12px">
+              현장 즉시판정은 경량 데이터 기반 <b>추정</b>입니다. 최종 <b>위치 정합 오차 ≤ 5cm · 종단간 지연 ≤ 3초</b>(시스템 성능지표)와 회차 성공 여부는 원본 정밀정합 후 <b>분석</b> 화면에서 확정됩니다.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 분석 ============ -->
+      <section class="page" id="page-analysis">
+        <div class="page-title">
+          <div>
+            <h1>분석</h1>
+            <p>배정된 프로젝트·현장의 원본 처리 상태, 정밀 정합 결과, 최종 5cm 검증 여부를 조회합니다.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card span-12">
+            <h2>프로젝트-현장 필터</h2>
+            <div class="select-row">
+              <div class="select-box"><span>프로젝트</span><select class="real-select" id="an-project" onchange="fillAnalysisSites()"></select></div>
+              <div class="select-box"><span>현장</span><select class="real-select" id="an-site" onchange="fillAnalysisRounds()"></select></div>
+              <div class="select-box"><span>회차</span><select class="real-select" id="an-round"></select></div>
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <h2>처리 상태</h2>
+            <table>
+              <thead><tr><th>회차</th><th>경량 검증</th><th>원본 업로드</th><th>정밀 정합</th><th>최종 오차</th><th>산출물</th></tr></thead>
+              <tbody>
+                <tr><td>R-20260617-04</td><td><span class="status ok">완료</span></td><td><span class="status info">82%</span></td><td><span class="status info">대기</span></td><td>예상 3.6cm</td><td>경량 커버리지 맵</td></tr>
+                <tr><td>R-20260617-03</td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td>4.1cm</td><td>정사영상, 오차 리포트</td></tr>
+                <tr><td>R-20260616-02</td><td><span class="status warn">재촬영 권고</span></td><td><span class="status warn">재개 대기</span></td><td><span class="status info">보류</span></td><td>5.8cm</td><td>누락 후보 맵</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-6">
+            <h2>정밀 정합 단계</h2>
+            <div class="steps">
+              <div class="step"><div class="step-num">1</div><div><b>원본 수신</b><span>RAW/JPG 원본과 위치 로그 검증</span></div><span class="status info">82%</span></div>
+              <div class="step"><div class="step-num">2</div><div><b>GCP/PPK 기준자료 적용</b><span>현장 기준자료 v1 참조</span></div><span class="status info">대기</span></div>
+              <div class="step"><div class="step-num">3</div><div><b>정밀 정합 및 오차 산정</b><span>검사점 대비 5cm 이내 판단</span></div><span class="status info">대기</span></div>
+            </div>
+          </div>
+
+          <div class="card span-6">
+            <h2>작업자에게 필요한 분석 요약</h2>
+            <table>
+              <tbody>
+                <tr><th>현장 재방문 필요</th><td><span class="status warn">북동쪽 구간 확인</span></td></tr>
+                <tr><th>원본 업로드 재개</th><td>브라우저 유지 시 자동 진행</td></tr>
+                <tr><th>최종 리포트 예상</th><td>원본 완료 후 약 30분</td></tr>
+                <tr><th>관리자 확인 필요</th><td>기준자료 변경 없음</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 리포트 ============ -->
+      <section class="page" id="page-reports">
+
+        <!-- 프로젝트 목록(게시판) 뷰 -->
+        <div class="view active" id="reports-list">
+          <div class="page-title">
+            <div>
+              <h1>리포트</h1>
+              <p>배정 프로젝트를 게시판처럼 열어 회차별 결과 문서를 조회·다운로드합니다. 권한이 있는 프로젝트만 보입니다.</p>
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>프로젝트 선택</h2>
+              <span class="tag">프로젝트를 누르면 리포트 목록이 열립니다</span>
+            </div>
+            <table>
+              <thead><tr><th>프로젝트</th><th>현장</th><th>리포트 수</th><th>다운로드 가능</th><th>상태</th></tr></thead>
+              <tbody id="reports-tbody"><!-- JS --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 프로젝트별 리포트(drill-in) 뷰 -->
+        <div class="view" id="reports-detail">
+          <div class="crumbs">
+            <a onclick="showReportsList()">리포트</a>
+            <span class="sep">/</span>
+            <span id="crumb-report">프로젝트</span>
+          </div>
+
+          <div class="page-title">
+            <div>
+              <h1 id="detail-report-name">프로젝트명</h1>
+              <p>회차별 결과 문서를 조회하고 다운로드합니다.</p>
+            </div>
+            <button class="button ghost" onclick="showReportsList()">← 목록으로</button>
+          </div>
+
+          <div class="grid">
+            <div class="card span-12">
+              <div class="card-head">
+                <h2>리포트 다운로드</h2>
+                <span class="tag">프로젝트 / 현장 / 회차 단위</span>
+              </div>
+              <p class="sub">현장·회차를 좁힐수록 받는 범위가 작아집니다. '전체'로 두면 상위 단위 전체를 묶어 받습니다. 분석 완료된 회차만 포함되며, 개별 문서는 아래 목록에서 따로 받을 수 있습니다.</p>
+              <div class="select-row">
+                <div class="select-box"><span>현장</span><select class="real-select" id="rep-f-site" onchange="fillRounds()"></select></div>
+                <div class="select-box"><span>회차</span><select class="real-select" id="rep-f-round" onchange="updateBundleLabel()"></select></div>
+                <div class="select-box" style="justify-content:center;align-items:center">
+                  <button class="button primary sm" id="bundle-btn" onclick="downloadBundle()">프로젝트 전체 받기 (ZIP)</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card span-12">
+              <h2>리포트 목록</h2>
+              <table>
+                <thead><tr><th>현장</th><th>회차</th><th>문서 유형</th><th>상태</th><th>담당자</th><th>다운로드</th></tr></thead>
+                <tbody id="detail-reports"><!-- JS --></tbody>
+              </table>
+            </div>
+
+            <div class="card span-6">
+              <h2>리포트 구성</h2>
+              <table>
+                <tbody>
+                  <tr><th>기본 정보</th><td>프로젝트, 현장, 회차, 작업자, 장비, 촬영 조건</td></tr>
+                  <tr><th>검증 정보</th><td>기준자료 버전, 검사점, 오차, 지연시간</td></tr>
+                  <tr><th>현장 판단</th><td>누락 영역, 재촬영 필요 여부, 특이사항</td></tr>
+                  <tr><th>첨부</th><td>경량 커버리지 맵, 정사영상, 처리 로그</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card span-6">
+              <h2>리포트 상태 안내</h2>
+              <p class="sub">리포트는 회차 분석 결과를 기준으로 자동 생성됩니다. 분석이 끝나야 다운로드할 수 있습니다.</p>
+              <table>
+                <tbody>
+                  <tr><td><span class="status info">분석 중</span></td><td>정밀 정합·5cm 검증 진행 중, 잠시 후 가능</td></tr>
+                  <tr><td><span class="status warn">보류 · 재촬영 대기</span></td><td>오차 초과 등으로 결과 미확정, 재촬영 필요</td></tr>
+                  <tr><td><span class="status ok">다운로드 가능</span></td><td>분석 완료, Word·PDF·HWP로 받기 가능</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 내 계정 ============ -->
+      <section class="page" id="page-account">
+        <div class="page-title">
+          <div>
+            <h1>내 계정</h1>
+            <p>공통사용자는 본인 정보와 비밀번호만 관리합니다. 사용자 추가·프로젝트 배정은 관리자가 처리합니다.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card span-5">
+            <h2>내 정보</h2>
+            <table>
+              <tbody>
+                <tr><th>이름</th><td>김작업</td></tr>
+                <tr><th>역할</th><td>공통사용자</td></tr>
+                <tr><th>이메일</th><td>worker01@miraeocean.com</td></tr>
+                <tr><th>접근 범위</th><td>배정 프로젝트 2개, 현장 3개</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card span-7">
+            <h2>비밀번호 재설정</h2>
+            <p class="sub">보안을 위해 현재 비밀번호를 먼저 확인해야 새 비밀번호를 설정할 수 있습니다.</p>
+
+            <div class="field" style="max-width:340px">
+              <label>현재 비밀번호</label>
+              <input type="password" class="real-input" id="cur-pw" placeholder="현재 비밀번호 입력" />
+            </div>
+            <div class="actions" id="pw-step1">
+              <button class="button primary" onclick="verifyPw()">확인</button>
+            </div>
+
+            <div id="pw-step2" style="display:none">
+              <div class="notice" style="margin:6px 0 16px;border-color:var(--green);color:var(--green);background:var(--green-soft)">현재 비밀번호 확인 완료. 새 비밀번호를 설정하세요.</div>
+              <div class="form-grid" style="grid-template-columns:1fr 1fr">
+                <div class="field"><label>새 비밀번호</label><input type="password" class="real-input" placeholder="10자 이상" /></div>
+                <div class="field"><label>새 비밀번호 확인</label><input type="password" class="real-input" placeholder="동일하게 입력" /></div>
+              </div>
+              <div class="actions"><button class="button primary" onclick="alert('비밀번호 변경 완료 — 목업')">비밀번호 변경</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= 검색 선택기 ================= -->
+  <div class="modal-back" id="picker">
+    <div class="modal">
+      <h3 id="picker-title">프로젝트 선택</h3>
+      <input class="real-input" id="picker-search" placeholder="이름으로 검색" oninput="renderPicker()" autocomplete="off" />
+      <div class="picker-list" id="picker-list"></div>
+      <div class="actions"><button class="button ghost" onclick="closePicker()">닫기</button></div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- 데이터(배정된 프로젝트만) ----------
+    const myProjects = {
+      p1: {
+        name: "2026 TRL점프업 연안침식 PoC",
+        sites: ["OO해수욕장", "YY해안"],
+        rounds: { "OO해수욕장": ["R-20260617-04", "R-20260617-03"], "YY해안": ["R-20260617-01"] },
+        reports: [
+          ["OO해수욕장", "R-20260617-03", "5cm 검증 결과서", ["다운로드 가능","ok"], "박작업"],
+          ["OO해수욕장", "R-20260617-04", "5cm 검증 결과서", ["분석 중","info"], "김작업"],
+          ["YY해안", "R-20260617-01", "정합 결과 요약", ["다운로드 가능","ok"], "박작업"]
+        ]
+      },
+      p2: {
+        name: "2026 연안침식 예비 실증",
+        sites: ["XX갯벌"],
+        rounds: { "XX갯벌": ["R-20260616-02"] },
+        reports: [
+          ["XX갯벌", "R-20260616-02", "재촬영 권고서", ["보류 · 재촬영 대기","warn"], "최작업"]
+        ]
+      }
+    };
+
+    function pill(arr) { return '<span class="status ' + arr[1] + '">' + arr[0] + '</span>'; }
+    function opts(list) { return list.map(v => '<option>' + v + '</option>').join(""); }
+
+    // ---------- 인증 ----------
+    function login() { document.body.classList.add("authed"); }
+    function logout() { document.body.classList.remove("authed"); }
+
+    // ---------- 상단 내비게이션 ----------
+    function go(nav) {
+      document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.nav === nav));
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.getElementById("page-" + nav).classList.add("active");
+      if (nav === "reports") showReportsList();
+      window.scrollTo(0, 0);
+    }
+
+    // ---------- 드론 측량: 검색 선택기 ----------
+    let svProj = "p1", svSite = null, pickerMode = "project", pickerItems = [];
+
+    function updateSurveyLabels() {
+      document.getElementById("sv-project-name").textContent = myProjects[svProj].name;
+      const siteEl = document.getElementById("sv-site-name");
+      siteEl.textContent = svSite || "현장을 선택하세요";
+      siteEl.classList.toggle("empty", !svSite);
+    }
+
+    function openPicker(mode) {
+      pickerMode = mode;
+      document.getElementById("picker-title").textContent = mode === "project" ? "프로젝트 선택" : "현장 선택";
+      document.getElementById("picker-search").value = "";
+      renderPicker();
+      document.getElementById("picker").classList.add("open");
+      document.getElementById("picker-search").focus();
+    }
+
+    function closePicker() { document.getElementById("picker").classList.remove("open"); }
+
+    function renderPicker() {
+      const q = document.getElementById("picker-search").value.trim().toLowerCase();
+      let items;
+      if (pickerMode === "project") {
+        items = Object.keys(myProjects).map(id => ({ id, label: myProjects[id].name, sub: myProjects[id].sites.length + "개 현장" }));
+      } else {
+        items = myProjects[svProj].sites.map(s => ({ id: s, label: s, sub: myProjects[svProj].name }));
+      }
+      pickerItems = items.filter(it => it.label.toLowerCase().includes(q));
+      const el = document.getElementById("picker-list");
+      el.innerHTML = pickerItems.length
+        ? pickerItems.map((it, i) => '<div class="picker-item" onclick="pickItem(' + i + ')">' + it.label + '<small>' + it.sub + '</small></div>').join("")
+        : '<div class="picker-empty">검색 결과가 없습니다.</div>';
+    }
+
+    function pickItem(i) {
+      const it = pickerItems[i];
+      if (pickerMode === "project") { svProj = it.id; svSite = null; }
+      else { svSite = it.id; }
+      updateSurveyLabels();
+      closePicker();
+    }
+
+    // ---------- 드론 측량: 회차 생성·업로드 흐름 ----------
+    const uplState = { name: false, picked: false };
+
+    function uplCreate() {
+      const v = document.getElementById("us-name").value.trim();
+      if (!v) { alert("회차 명칭을 입력하세요."); return; }
+      uplState.name = true;
+      const st = document.getElementById("us-create-st");
+      st.textContent = "완료"; st.className = "status ok";
+    }
+
+    function uplPick(type) {
+      uplState.picked = true;
+      document.getElementById("us-pick-info").textContent =
+        type === "folder" ? "폴더 1개 · 촬영 418장 선택됨" : "파일 418개 선택됨";
+      const st = document.getElementById("us-pick-st");
+      st.textContent = "완료"; st.className = "status ok";
+    }
+
+    function uplRamp(barId, pctId, target, done) {
+      let v = 0;
+      const bar = document.getElementById(barId), p = document.getElementById(pctId);
+      const t = setInterval(() => {
+        v += 4;
+        if (v >= target) { v = target; clearInterval(t); if (done) setTimeout(done, 250); }
+        bar.style.setProperty("--w", v + "%");
+        p.textContent = v + "%";
+      }, 40);
+    }
+
+    function uplStart() {
+      if (!uplState.name) { alert("먼저 회차를 생성하세요."); return; }
+      if (!uplState.picked) { alert("파일 또는 폴더를 선택하세요."); return; }
+      const btn = document.getElementById("us-start");
+      btn.disabled = true; btn.textContent = "업로드 중…";
+      const ss = document.getElementById("us-start-st");
+      ss.textContent = "진행 중"; ss.className = "status info";
+      uplRamp("us-light-bar", "us-light-pct", 100, () => {
+        document.getElementById("us-light-pct").textContent = "완료";
+        uplRamp("us-fast-bar", "us-fast-pct", 100, () => {
+          document.getElementById("us-fast-pct").textContent = "적합";
+          uplRamp("us-orig-bar", "us-orig-pct", 82, () => {
+            document.getElementById("us-orig-pct").textContent = "82%";
+            ss.textContent = "원본 진행 중"; ss.className = "status info";
+          });
+        });
+      });
+    }
+
+    // ---------- 분석: 프로젝트→현장→회차 ----------
+    function fillAnalysisSites() {
+      const proj = document.getElementById("an-project").value;
+      document.getElementById("an-site").innerHTML = opts(myProjects[proj].sites);
+      fillAnalysisRounds();
+    }
+    function fillAnalysisRounds() {
+      const proj = document.getElementById("an-project").value;
+      const site = document.getElementById("an-site").value;
+      document.getElementById("an-round").innerHTML = opts(myProjects[proj].rounds[site] || []);
+    }
+
+    // ---------- 리포트 목록/상세 ----------
+    let currentReportId = null;
+
+    function projOptions(sel) {
+      return Object.keys(myProjects).map(id => '<option value="' + id + '">' + myProjects[id].name + '</option>').join("");
+    }
+
+    function showReportsList() {
+      document.getElementById("reports-detail").classList.remove("active");
+      document.getElementById("reports-list").classList.add("active");
+      const tb = document.getElementById("reports-tbody");
+      tb.innerHTML = Object.keys(myProjects).map(id => {
+        const p = myProjects[id];
+        const ready = p.reports.filter(r => r[3][1] === "ok").length;
+        let st;
+        if (ready === p.reports.length) st = pill(["전부 가능","ok"]);
+        else if (ready === 0) st = pill(["분석 중","info"]);
+        else st = pill(["일부 가능","warn"]);
+        return '<tr class="row-link" onclick="openReport(\'' + id + '\')">' +
+          '<td><span class="linkish">' + p.name + '</span></td>' +
+          '<td>' + p.sites.join(", ") + '</td>' +
+          '<td>' + p.reports.length + '건</td>' +
+          '<td>' + ready + ' / ' + p.reports.length + '건</td>' +
+          '<td>' + st + '</td></tr>';
+      }).join("");
+    }
+
+    function fillRounds() {
+      const p = myProjects[currentReportId];
+      if (!p) return;
+      const site = document.getElementById("rep-f-site").value;
+      const sel = document.getElementById("rep-f-round");
+      if (site === "__all") {
+        sel.innerHTML = '<option value="__all">전체 회차</option>';
+        sel.disabled = true;
+      } else {
+        const rounds = [...new Set(p.reports.filter(r => r[3][1] === "ok" && r[0] === site).map(r => r[1]))];
+        sel.innerHTML = '<option value="__all">전체 회차</option>' + rounds.map(r => '<option value="' + r + '">' + r + '</option>').join("");
+        sel.disabled = false;
+      }
+      updateBundleLabel();
+    }
+
+    function updateBundleLabel() {
+      const site = document.getElementById("rep-f-site").value;
+      const round = document.getElementById("rep-f-round").value;
+      const btn = document.getElementById("bundle-btn");
+      if (site === "__all") btn.textContent = "프로젝트 전체 받기 (ZIP)";
+      else if (round === "__all") btn.textContent = "현장 전체 받기 (ZIP)";
+      else btn.textContent = "회차 리포트 받기";
+    }
+
+    function downloadBundle() {
+      const p = myProjects[currentReportId];
+      const site = document.getElementById("rep-f-site").value;
+      const round = document.getElementById("rep-f-round").value;
+      let scope, count;
+      if (site === "__all") { scope = p.name + " 전체"; count = p.reports.filter(r => r[3][1] === "ok").length; }
+      else if (round === "__all") { scope = site + " 전체"; count = p.reports.filter(r => r[3][1] === "ok" && r[0] === site).length; }
+      else { scope = site + " · " + round; count = p.reports.filter(r => r[3][1] === "ok" && r[0] === site && r[1] === round).length; }
+      if (!count) { alert("선택 범위에 다운로드 가능한(분석 완료) 리포트가 없습니다."); return; }
+      alert(scope + " 리포트 " + count + "건 묶음 다운로드(ZIP) — 목업");
+    }
+
+    function openReport(id) {
+      const p = myProjects[id];
+      currentReportId = id;
+      document.getElementById("crumb-report").textContent = p.name;
+      document.getElementById("detail-report-name").textContent = p.name;
+      const sites = [...new Set(p.reports.map(r => r[0]))];
+      document.getElementById("rep-f-site").innerHTML =
+        '<option value="__all">전체 현장</option>' + sites.map(s => '<option value="' + s + '">' + s + '</option>').join("");
+      fillRounds();
+      document.getElementById("detail-reports").innerHTML = p.reports.map(r => {
+        const ready = r[3][1] === "ok";
+        const btn = ready
+          ? '<button class="button sm" onclick="alert(\'리포트 다운로드(Word/PDF/HWP) — 목업\')">다운로드</button>'
+          : '<button class="button sm" disabled style="opacity:.5;cursor:not-allowed">분석 후 가능</button>';
+        return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + pill(r[3]) + '</td><td>' + r[4] + '</td>' +
+          '<td>' + btn + '</td></tr>';
+      }).join("");
+      document.getElementById("reports-list").classList.remove("active");
+      document.getElementById("reports-detail").classList.add("active");
+      window.scrollTo(0, 0);
+    }
+
+    // ---------- 비밀번호 재설정(2단계) ----------
+    function verifyPw() {
+      const inp = document.getElementById("cur-pw");
+      if (!inp.value) { alert("현재 비밀번호를 입력하세요."); inp.focus(); return; }
+      inp.disabled = true;
+      document.getElementById("pw-step1").style.display = "none";
+      document.getElementById("pw-step2").style.display = "block";
+    }
+
+    // ---------- 차트 툴팁 ----------
+    function chartTip(e, txt) {
+      const wrap = e.currentTarget.closest(".areachart");
+      const tip = wrap.querySelector(".chart-tip");
+      const box = wrap.getBoundingClientRect();
+      tip.textContent = txt;
+      tip.style.left = (e.clientX - box.left) + "px";
+      tip.style.top = (e.clientY - box.top) + "px";
+      tip.style.opacity = "1";
+    }
+    function chartTipHide(e) {
+      e.currentTarget.closest(".areachart").querySelector(".chart-tip").style.opacity = "0";
+    }
+
+    // ---------- 초기 렌더 ----------
+    document.getElementById("an-project").innerHTML = projOptions();
+    svSite = myProjects[svProj].sites[0];
+    updateSurveyLabels();
+    fillAnalysisSites();
+    showReportsList();
+    document.getElementById("picker").addEventListener("click", e => { if (e.target.id === "picker") closePicker(); });
+  </script>
+</body>
+</html>

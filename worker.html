@@ -836,6 +836,8 @@
                   <rect x="40" y="38" width="320" height="207" rx="10" fill="none" stroke="#3f4a54" stroke-width="2" stroke-dasharray="7 6"/>
                   <!-- 촬영 footprint -->
                   <path d="M40,38 L300,38 L300,92 L360,92 L360,245 L40,245 Z" fill="rgba(21,101,160,0.16)" stroke="#1565a0" stroke-width="2"/>
+                  <!-- 비행 경로 / 촬영 위치 -->
+                  <g id="cov-path"></g>
                   <!-- 누락 후보 -->
                   <path d="M300,38 H360 V92 H300 Z" fill="url(#hatchA)" stroke="#b07d18" stroke-width="1.5"/>
                   <text x="44" y="30" fill="#3f4a54" font-size="11" font-weight="800" font-family="sans-serif">계획 조사범위</text>
@@ -951,6 +953,7 @@
               <button class="seg active" data-layer="ortho" onclick="setVizLayer('ortho')">정사영상</button>
               <button class="seg" data-layer="dsm" onclick="setVizLayer('dsm')">DSM (표고)</button>
               <button class="seg" data-layer="cp" onclick="setVizLayer('cp')">검사점 오차</button>
+              <button class="seg" data-layer="pos" onclick="setVizLayer('pos')">촬영 위치</button>
             </div>
 
             <!-- 정사영상 -->
@@ -1016,6 +1019,17 @@
                 </g>
               </svg>
               <div style="margin-top:8px;font-size:12px;color:var(--muted)">검사점 5점 · <b style="color:var(--text)">RMSE 4.1cm</b> (≤ 5cm 적합) · CP-3만 기준 근접</div>
+            </div>
+
+            <!-- 촬영 위치 / 비행 경로 -->
+            <div id="viz-pos" style="display:none">
+              <svg id="pos-svg" viewBox="0 0 640 260" width="100%" style="display:block;width:100%;border:1px solid var(--line);border-radius:10px;background:#eaf6ea" role="img" aria-label="촬영 위치"></svg>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:8px;font-size:12px;color:var(--muted);flex-wrap:wrap">
+                <span><span style="display:inline-block;width:18px;height:3px;background:#1f9d4d;vertical-align:middle"></span> 시간순 비행 경로</span>
+                <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1b3aa0;vertical-align:middle"></span> 촬영 위치</span>
+                <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#1b3aa0;vertical-align:middle"></span> 시작점</span>
+                <span style="margin-left:auto">소티 1 · 촬영 160장 · 종/횡중복 76/66%</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1418,10 +1432,59 @@
 
     // ---------- 분석: 결과 시각화 레이어 ----------
     function setVizLayer(layer) {
-      ["ortho", "dsm", "cp"].forEach(l => {
+      ["ortho", "dsm", "cp", "pos"].forEach(l => {
         document.getElementById("viz-" + l).style.display = (l === layer) ? "" : "none";
       });
       document.querySelectorAll("#viz-tabs .seg").forEach(b => b.classList.toggle("active", b.dataset.layer === layer));
+    }
+
+    // 촬영 위치 / 비행 경로(소티) — serpentine 경로 + 시간순 점
+    function renderImagePositions() {
+      const svg = document.getElementById("pos-svg");
+      if (!svg) return;
+      const rows = 8, cols = 20, x0 = 95, x1 = 545, y0 = 42, y1 = 220;
+      const pts = [];
+      for (let r = 0; r < rows; r++) {
+        const y = y0 + r * (y1 - y0) / (rows - 1);
+        for (let c = 0; c < cols; c++) {
+          const f = c / (cols - 1);
+          const x = (r % 2 === 0) ? x0 + f * (x1 - x0) : x1 - f * (x1 - x0);
+          pts.push([x, y]);
+        }
+      }
+      const poly = pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+      const dots = pts.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="1.8" fill="#1b3aa0"/>').join("");
+      const s = pts[0];
+      svg.innerHTML =
+        '<g transform="rotate(-7 320 130)">' +
+        '<polyline points="' + poly + '" fill="none" stroke="#1f9d4d" stroke-width="1.4"/>' +
+        dots +
+        '<circle cx="' + s[0].toFixed(1) + '" cy="' + s[1].toFixed(1) + '" r="5" fill="#1b3aa0"/>' +
+        '</g>';
+    }
+
+    // 조사범위 커버리지 패널 위 비행 경로 (footprint는 덮고 북동 누락 구간은 비움)
+    function renderCoveragePath() {
+      const g = document.getElementById("cov-path");
+      if (!g) return;
+      const rows = 8, cols = 14, yTop = 52, yBot = 232;
+      const pts = [];
+      for (let r = 0; r < rows; r++) {
+        const y = yTop + r * (yBot - yTop) / (rows - 1);
+        const xMax = (y < 92) ? 288 : 345;   // 상단 우측 누락 노치 회피
+        for (let c = 0; c < cols; c++) {
+          const f = c / (cols - 1);
+          const x = (r % 2 === 0) ? 55 + f * (xMax - 55) : xMax - f * (xMax - 55);
+          pts.push([x, y]);
+        }
+      }
+      const poly = pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+      const dots = pts.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="1.4" fill="#1b3aa0"/>').join("");
+      const s = pts[0];
+      g.innerHTML =
+        '<polyline points="' + poly + '" fill="none" stroke="#1f9d4d" stroke-width="1.2"/>' +
+        dots +
+        '<circle cx="' + s[0].toFixed(1) + '" cy="' + s[1].toFixed(1) + '" r="4" fill="#1b3aa0"/>';
     }
 
     // ---------- 리포트 목록/상세 ----------
@@ -1540,6 +1603,8 @@
     siteMode("existing");
     runMode("new");
     addSortie();
+    renderImagePositions();
+    renderCoveragePath();
     fillAnalysisSites();
     showReportsList();
     document.getElementById("picker").addEventListener("click", e => { if (e.target.id === "picker") closePicker(); });

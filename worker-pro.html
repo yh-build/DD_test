@@ -159,6 +159,16 @@
     .image-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .thumb{aspect-ratio:4/3;border:1px solid var(--line);border-radius:10px;background:linear-gradient(135deg,rgba(62,200,230,.18),rgba(31,143,191,.08)),repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 14px,rgba(255,255,255,.02) 14px 28px);display:flex;align-items:end;padding:8px;color:#cfe0ea;font-size:12px;font-weight:700}
 
+    .seg-group{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+    .seg{border:0;background:transparent;padding:9px 16px;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit}
+    .seg+.seg{border-left:1px solid var(--line)}
+    .seg.active{background:var(--primary-soft);color:var(--primary)}
+    .locked{opacity:.55;pointer-events:none}
+    .locked .fake-input{background:rgba(255,255,255,.02)}
+    .sortie-row{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);padding:11px;margin-bottom:8px}
+    .sortie-row .track{height:9px}
+    .sortie-prog{display:grid;grid-template-columns:58px 1fr 42px;gap:8px;align-items:center;margin-top:7px;font-size:12px;color:var(--muted)}
+
     @media (max-width:980px){.span-3,.span-4,.span-5,.span-6,.span-7,.span-8{grid-column:span 12}.select-row,.form-grid{grid-template-columns:1fr 1fr}}
     @media (max-width:760px){.topbar-row{flex-wrap:nowrap}.brand>div:not(.mark){display:none}.user-chip{font-size:0;gap:0;padding:5px}.user-chip .avatar{font-size:11px}.nav .lbl{display:none}.nav button{padding:9px;min-width:40px}}
     @media (max-width:720px){.card>div[style*="1fr 1fr"]{grid-template-columns:1fr !important}}
@@ -173,7 +183,7 @@
   <section class="login">
     <div class="login-panel">
       <h1>DroneDocking</h1>
-      <p>작업자용 목업입니다. 로그인 이후 배정된 프로젝트의 현장 작업, 분석, 리포트만 확인합니다.</p>
+      <p>작업자용 목업입니다. 로그인 이후 배정된 프로젝트의 현장 작업, 분석, 리포트를 수행합니다.</p>
       <div class="field">
         <label>아이디</label>
         <div class="fake-input">worker01@miraeocean.com</div>
@@ -331,7 +341,7 @@
         <div class="page-title">
           <div>
             <h1>드론 측량</h1>
-            <p>회차를 생성하고 경량 데이터를 먼저 올린 뒤, 브라우저가 켜져 있으면 원본 업로드를 이어갑니다.</p>
+            <p>경량(저해상·특징점·RTK)은 실시간 전송해 3초 내 현장 판정하고, 원본(풀해상도)은 드론 SD에 두었다가 착륙 후 업로드해 비동기 정밀 처리(5cm·정사영상·DSM)합니다.</p>
           </div>
           <span class="tag">배정 현장만 선택 가능</span>
         </div>
@@ -351,81 +361,137 @@
                 <b class="pick-val" id="sv-site-name">—</b>
                 <button class="button sm" style="margin-top:6px" onclick="openPicker('site')">선택 / 변경</button>
               </div>
-              <div class="select-box"><span>기준자료</span><b>GCP/PPK 기준자료 v1 사용</b></div>
+              <div class="select-box"><span>현장 기준자료</span><b>좌표계·고정점·기준 정사영상·특징점 (v2)</b></div>
             </div>
           </div>
 
-          <div class="card span-7">
-            <h2>2. 회차 생성 및 업로드</h2>
-            <p class="sub">회차를 만들고 파일을 올리면 경량화 → 빠른 검증 → 원본 업로드 순서로 진행됩니다.</p>
+          <div class="card span-12">
+            <h2>2. 측량 설정 (현장 기준자료 · 회차 GCP)</h2>
+            <p class="sub">현장 기준자료 선택에 따라 이번 회차 GCP·검사점 적용 방식이 함께 결정됩니다. 기존 현장은 같은 날 이전 회차 GCP를 쓰고, 신규 현장은 새로 RTK 실측합니다.</p>
 
-            <div class="upl-step">
-              <div class="upl-head"><span class="step-num">1</span><b>회차 생성</b><span class="status info" id="us-create-st">대기</span></div>
-              <div class="field" style="margin:10px 0 0">
-                <label>회차 명칭</label>
-                <div style="display:flex;gap:8px">
-                  <input class="real-input" id="us-name" placeholder="예: R-20260617-04 (조석 중간 · 고도 80m)" />
-                  <button class="button primary" style="flex-shrink:0" onclick="uplCreate()">생성</button>
+            <div class="field" id="survey-mode">
+              <label>현장 고정 기준자료</label>
+              <div class="seg-group">
+                <button type="button" class="seg active" data-mode="existing" onclick="siteMode('existing')">기존 현장 기준자료 사용</button>
+                <button type="button" class="seg" data-mode="new" onclick="siteMode('new')">신규 현장 기준자료 등록</button>
+              </div>
+              <div class="hint" id="site-mode-hint" style="color:var(--muted);font-size:12px;margin-top:7px"></div>
+            </div>
+
+            <div class="form-grid locked" id="survey-fields" style="margin-top:14px">
+              <div class="field"><label>좌표계</label><div class="fake-input">EPSG:5186</div></div>
+              <div class="field"><label>기준점·수준점 처리</label><div class="fake-input">타원체고 → 지오이드 → 국가수준점 정표고</div></div>
+              <div class="field"><label>반영구 고정점</label><div class="fake-input">상시 GCP 좌표 · 기준국 위치</div></div>
+              <div class="field"><label>기준 정사영상·특징점</label><div class="fake-input">기준 GeoTIFF · 육지부 Feature Point</div></div>
+            </div>
+
+            <div class="field" style="margin-top:14px">
+              <label>이번 회차 GCP·검사점 적용 방식</label>
+              <div class="seg-group">
+                <button type="button" class="seg active" id="gcp-reuse-mode">같은 날 이전 회차 GCP 사용</button>
+                <button type="button" class="seg" id="gcp-rtk-mode">새로 RTK 실측</button>
+              </div>
+              <div class="hint" id="gcp-mode-hint" style="color:var(--muted);font-size:12px;margin-top:7px">기존 현장 기준자료 사용 시 같은 날 이전 회차 GCP·검사점이 자동 적용됩니다.</div>
+            </div>
+
+            <div class="form-grid" style="margin-top:14px">
+              <div class="field"><label id="gcp-field-1-label">재사용 기준 회차</label><div class="fake-input" id="gcp-field-1-value">R-20260617-03 · OO해수욕장</div></div>
+              <div class="field"><label id="gcp-field-2-label">GCP·검사점 구성</label><div class="fake-input" id="gcp-field-2-value">GCP 4점 이상 · 검사점 3점 이상 (GCP와 분리)</div></div>
+              <div class="field"><label id="gcp-field-3-label">재사용 조건</label><div class="fake-input" id="gcp-field-3-value">같은 날짜 · 같은 현장 · 마커 위치 변동 없음</div></div>
+            </div>
+
+            <div id="rtk-register-panel" style="display:none;margin-top:14px">
+              <div class="notice" style="margin-bottom:12px">
+                신규 현장은 기본수준점값과 RTK 측량자료를 먼저 등록합니다. 시스템은 이 입력값으로 GCP·검사점 좌표표를 산출하고, 산출된 좌표표를 이번 회차 정밀 정합 기준으로 사용합니다.
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label>RTK 측량자료</label>
+                  <input type="file" class="real-input" accept=".csv,.txt,.log,.obs,.xlsx,.zip,.rw5" multiple />
+                </div>
+                <div class="field">
+                  <label>기본수준점명</label>
+                  <input class="real-input" placeholder="예: BM-OO-01 / 국가수준점 번호" />
+                </div>
+                <div class="field">
+                  <label>기본수준점 정표고(m)</label>
+                  <input type="number" step="0.001" class="real-input" placeholder="예: 12.345" />
+                </div>
+                <div class="field">
+                  <label>타원체고(m)</label>
+                  <input type="number" step="0.001" class="real-input" placeholder="예: 31.248" />
+                </div>
+                <div class="field">
+                  <label>지오이드고(m)</label>
+                  <input type="number" step="0.001" class="real-input" placeholder="예: 18.903" />
                 </div>
               </div>
-              <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
-                <div class="field" style="margin:0">
-                  <label>촬영일자</label>
-                  <input type="date" class="real-input" id="us-date" value="2026-06-17" />
-                </div>
-                <div class="field" style="margin:0">
-                  <label>촬영 시각</label>
-                  <input type="time" class="real-input" id="us-time" value="15:10" />
-                </div>
+              <div class="notice" style="margin-top:12px">
+                <b>산출 결과</b> · RTK 측량자료와 기본수준점값을 기준으로 GCP·검사점 좌표표를 자동 생성합니다.
+                <div class="right-save" style="margin-top:10px"><button class="button">좌표표 산출 미리보기</button></div>
               </div>
+              <table style="margin-top:10px">
+                <thead>
+                  <tr><th>구분</th><th>점명</th><th>X/Y/Z 좌표</th><th>상태</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>GCP</td><td>GCP-01</td><td>RTK 자료 등록 후 산출</td><td><span class="status info">대기</span></td></tr>
+                  <tr><td>검사점</td><td>CP-01</td><td>RTK 자료 등록 후 산출</td><td><span class="status info">대기</span></td></tr>
+                </tbody>
+              </table>
             </div>
 
-            <div class="upl-step">
-              <div class="upl-head"><span class="step-num">2</span><b>파일 · 폴더 선택</b><span class="status info" id="us-pick-st">대기</span></div>
-              <div class="actions" style="justify-content:flex-start;margin-top:10px;align-items:center">
-                <button class="button" onclick="uplPick('file')">파일 선택</button>
-                <button class="button" onclick="uplPick('folder')">폴더 선택</button>
-                <span id="us-pick-info" style="color:var(--muted);font-size:13px"></span>
-              </div>
-            </div>
-
-            <div class="upl-step">
-              <div class="upl-head"><span class="step-num">3</span><b>업로드 시작</b><span class="status info" id="us-start-st">대기</span></div>
-              <div class="actions" style="justify-content:flex-start;margin-top:10px">
-                <button class="button primary" id="us-start" onclick="uplStart()">업로드 시작</button>
-              </div>
-            </div>
-
-            <div class="upl-step">
-              <div class="upl-head"><span class="step-num">4</span><b>경량화</b><span class="upl-pct" id="us-light-pct">0%</span></div>
-              <div class="track"><div class="fill" id="us-light-bar" style="--w:0%"></div></div>
-            </div>
-
-            <div class="upl-step">
-              <div class="upl-head"><span class="step-num">5</span><b>빠른 검증</b><span class="upl-pct" id="us-fast-pct">0%</span></div>
-              <div class="track"><div class="fill green" id="us-fast-bar" style="--w:0%"></div></div>
-            </div>
-
-            <div class="upl-step">
-              <div class="upl-head"><span class="step-num">6</span><b>원본 업로드</b><span class="upl-pct" id="us-orig-pct">0%</span></div>
-              <div class="track"><div class="fill blue" id="us-orig-bar" style="--w:0%"></div></div>
-              <p class="sub" style="margin:8px 0 0">브라우저가 열려 있으면 백그라운드로 이어 전송, 닫히면 재개 대기됩니다.</p>
-            </div>
+            <div class="notice" id="gcp-mode-notice" style="margin-top:12px">기존 현장 기준자료를 쓰는 같은 날 반복 비행은 <b>이전 회차 GCP·검사점</b>을 재사용합니다. 날짜가 바뀌거나 표식 이동·유실이 있으면 신규 기준자료 등록 또는 새 RTK 실측으로 전환합니다.</div>
+            <div class="right-save"><button class="button primary">측량 설정 저장</button></div>
           </div>
 
-          <div class="card span-5">
-            <h2>Mission Package 검증</h2>
-            <table>
-              <tbody>
-                <tr><th>파일 구성</th><td><span class="status ok">정상</span></td></tr>
-                <tr><th>구성 내역</th><td>촬영 418장, 위치 로그 1개, 체크섬 일치</td></tr>
-                <tr><th>조사 범위</th><td>계획 범위 대비 96%</td></tr>
-                <tr><th>누락 영역</th><td>북동쪽 1개 구간 후보</td></tr>
-                <tr><th>재촬영 판단</th><td><span class="status ok">필수 아님</span></td></tr>
-              </tbody>
-            </table>
-            <div class="notice" style="margin-top: 12px;">
-              원본은 최종 5cm 검증과 정사영상/3D 후처리에 필요하므로, 경량 판정 이후에도 같은 회차에 계속 업로드합니다.
+          <div class="card span-12">
+            <h2>3. 회차 · 소티 업로드</h2>
+            <p class="sub">회차를 만들거나 기존 회차를 고르고, 소티 단위로 파일을 첨부합니다. 소티는 +/−로 여러 개를 동시에 올릴 수 있고 경량화·원본 업로드가 함께 진행됩니다.</p>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">1</span><b>회차</b></div>
+              <div class="seg-group" style="margin-top:10px">
+                <button type="button" class="seg active" id="run-new-mode" onclick="runMode('new')">새 회차 생성</button>
+                <button type="button" class="seg" id="run-exist-mode" onclick="runMode('exist')">기존 회차 선택</button>
+              </div>
+              <div class="form-grid" id="run-new-fields" style="grid-template-columns:2fr 1fr 1fr;margin-top:10px">
+                <div class="field" style="margin:0"><label>회차 명칭</label><input class="real-input" id="us-name" value="R-20260617-04 (조석 중간·고도 80m)" /></div>
+                <div class="field" style="margin:0"><label>촬영일자</label><input type="date" class="real-input" id="us-date" value="2026-06-17" /></div>
+                <div class="field" style="margin:0"><label>촬영 시각</label><input type="time" class="real-input" id="us-time" value="15:10" /></div>
+              </div>
+              <div class="field" id="run-exist-fields" style="margin-top:10px;display:none">
+                <label>기존 회차 선택</label>
+                <select class="real-select" id="us-exist">
+                  <option>R-20260617-04 · OO해수욕장 (소티 1 완료)</option>
+                  <option>R-20260617-03 · OO해수욕장</option>
+                  <option>R-20260616-02 · XX갯벌</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">2</span><b>소티 업로드</b><button class="button sm" style="margin-left:auto" onclick="addSortie()">+ 소티 추가</button></div>
+              <p class="sub" style="margin:8px 0 0">소티(한 번 비행) 단위로 파일/폴더를 첨부합니다. 첨부하면 경량화와 원본 업로드가 함께 진행됩니다.</p>
+              <div id="sortie-list" style="margin-top:10px"></div>
+            </div>
+
+            <div class="upl-step">
+              <div class="upl-head"><span class="step-num">3</span><b>빠른 검증 (회차 합산)</b><span class="status info" id="verify-st">대기</span></div>
+              <p class="sub" style="margin:8px 0 0">소티를 다 올린 뒤 검증을 실행해 회차 전체 커버리지·누락·재촬영 여부를 판정합니다.</p>
+              <div class="actions" style="justify-content:flex-start;margin-top:10px"><button class="button primary" onclick="runVerify()">재촬영 검증 실행</button></div>
+              <div id="verify-result" style="display:none;margin-top:12px">
+                <table>
+                  <tbody>
+                    <tr><th>업로드 소티</th><td id="vr-sorties">—</td></tr>
+                    <tr><th>구성 내역</th><td id="vr-files">—</td></tr>
+                    <tr><th>조사 범위(합산)</th><td id="vr-cov">—</td></tr>
+                    <tr><th>누락 영역</th><td id="vr-miss">—</td></tr>
+                    <tr><th>재촬영 판단</th><td id="vr-judge">—</td></tr>
+                  </tbody>
+                </table>
+                <div class="notice" style="margin-top:10px">전 소티를 합산해 회차 재촬영 여부를 판정합니다. 원본은 최종 5cm 검증·정사영상·DSM(비동기)에 쓰입니다.</div>
+              </div>
             </div>
           </div>
 
@@ -462,11 +528,27 @@
           </div>
 
           <div class="card span-12">
+            <h2>GCP 검출 · 마킹</h2>
+            <p class="sub">업로드 영상에서 GCP를 검출합니다. 코드 타겟은 자동 검출되고, 미검출 GCP는 이미지를 열어 마커 중심을 직접 클릭하면 겹치는 나머지 영상에 자동으로 투영됩니다.</p>
+            <div class="actions" style="justify-content:flex-start;margin:0 0 12px;align-items:center">
+              <button class="button primary">자동 검출 실행</button>
+              <span class="status ok">자동 검출 4점</span>
+              <span class="status warn">수동 마킹 필요 1점</span>
+            </div>
+            <div class="image-grid">
+              <div class="thumb">GCP-1 · 자동 검출</div>
+              <div class="thumb">GCP-2 · 자동 검출</div>
+              <div class="thumb" style="border-color:var(--amber);color:var(--amber)">GCP-3 · 미검출 (클릭 마킹)</div>
+              <div class="thumb">GCP-4 · 자동 검출</div>
+            </div>
+          </div>
+
+          <div class="card span-12">
             <div class="card-head">
               <h2>정합 시각화 <span class="tag" style="vertical-align:middle">이미지 기반</span></h2>
               <span class="tag">경량 데이터 미리보기</span>
             </div>
-            <p class="sub">정합은 촬영 이미지에서 GCP 마커와 육지부 특징점을 검출해 기준 정사영상·기준좌표와 맞추는 과정입니다. 아래에서 GCP 정합 결과와 조사범위 커버리지를 이미지로 확인합니다.</p>
+            <p class="sub">정합은 드론 영상에서 GCP 마커(코드 타겟 자동 검출, 일반 마커는 수동 시드 마킹)와 육지부 특징점을 검출하고, 측량 설정에서 실측한 GCP와 매칭해 기준 정사영상·기준좌표에 맞추는 과정입니다. 이후 정사보정으로 정사영상·DSM이 산출됩니다.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
               <figure style="margin:0">
                 <svg viewBox="0 0 400 280" width="100%" style="display:block;border:1px solid var(--line);border-radius:8px;background:#eef4f5">
@@ -513,7 +595,7 @@
                     <text x="38" y="58" fill="#3f4a54">육지부 특징점</text>
                   </g>
                 </svg>
-                <figcaption style="margin-top:8px;color:var(--muted);font-size:12px;font-weight:800">GCP 5/5점 검출·정합 · 검사점 잔차 3.6cm (≤ 5cm) → <span style="color:var(--green)">통과</span></figcaption>
+                <figcaption style="margin-top:8px;color:var(--muted);font-size:12px;font-weight:800">GCP 5/5점 자동 검출·매칭 (수동 보정 0) · 검사점 잔차 3.6cm (≤ 5cm) → <span style="color:var(--green)">통과</span></figcaption>
               </figure>
 
               <figure style="margin:0">
@@ -567,7 +649,7 @@
         <div class="page-title">
           <div>
             <h1>분석</h1>
-            <p>배정된 프로젝트·현장의 원본 처리 상태, 정밀 정합 결과, 최종 5cm 검증 여부를 조회합니다.</p>
+            <p>원본 처리 상태·정밀 정합 결과·최종 5cm 검증을 조회하고, 원본(풀해상도) 기반 정밀 분석을 실행합니다.</p>
           </div>
         </div>
 
@@ -587,22 +669,40 @@
               <thead><tr><th>회차</th><th>경량 검증</th><th>원본 업로드</th><th>정밀 정합</th><th>최종 오차</th><th>산출물</th></tr></thead>
               <tbody>
                 <tr><td>R-20260617-04</td><td><span class="status ok">완료</span></td><td><span class="status info">82%</span></td><td><span class="status info">대기</span></td><td>예상 3.6cm</td><td>경량 커버리지 맵</td></tr>
-                <tr><td>R-20260617-03</td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td>4.1cm</td><td>정사영상, 오차 리포트</td></tr>
+                <tr><td>R-20260617-03</td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td>4.1cm</td><td>오차 리포트 · 정사영상·DSM <span class="status soft">비동기</span></td></tr>
                 <tr><td>R-20260616-02</td><td><span class="status warn">재촬영 권고</span></td><td><span class="status warn">재개 대기</span></td><td><span class="status info">보류</span></td><td>5.8cm</td><td>누락 후보 맵</td></tr>
               </tbody>
             </table>
           </div>
 
-          <div class="card span-6">
-            <h2>정밀 정합 단계</h2>
+          <div class="card span-8">
+            <div class="card-head">
+              <h2>원본 정밀 분석</h2>
+              <span class="status info" id="pa-st">대기</span>
+            </div>
+            <p class="sub">원본(풀해상도) 업로드가 끝나면 정밀 정합·번들조정으로 5cm를 확정하고 정사영상·DSM을 산출합니다. (실시간 3초 경로와 별개인 비동기 처리)</p>
+            <div class="notice" id="pa-pre" style="margin-bottom:12px">선택 회차 원본 업로드 <b>100% 완료</b> — 정밀 분석을 실행할 수 있습니다.</div>
+            <div class="actions" style="justify-content:flex-start;margin:0 0 14px">
+              <button class="button primary" id="pa-run" onclick="runPrecise()">원본 정밀 분석 실행</button>
+            </div>
             <div class="steps">
-              <div class="step"><div class="step-num">1</div><div><b>원본 수신</b><span>RAW/JPG 원본과 위치 로그 검증</span></div><span class="status info">82%</span></div>
-              <div class="step"><div class="step-num">2</div><div><b>GCP/PPK 기준자료 적용</b><span>현장 기준자료 v1 참조</span></div><span class="status info">대기</span></div>
-              <div class="step"><div class="step-num">3</div><div><b>정밀 정합 및 오차 산정</b><span>검사점 대비 5cm 이내 판단</span></div><span class="status info">대기</span></div>
+              <div class="step"><div class="step-num">1</div><div><b>원본 수신·검증</b><span>RAW/JPG 원본·위치 로그 체크섬</span></div><span class="status info" id="pa-s1">대기</span></div>
+              <div class="step"><div class="step-num">2</div><div><b>GCP 매칭·번들조정</b><span>실측 GCP ↔ 영상 GCP, 카메라 자세·절대좌표</span></div><span class="status info" id="pa-s2">대기</span></div>
+              <div class="step"><div class="step-num">3</div><div><b>정밀 정합·5cm 검증</b><span>검사점 대비 RMSE ≤ 5cm 판정</span></div><span class="status info" id="pa-s3">대기</span></div>
+              <div class="step"><div class="step-num">4</div><div><b>정사영상·DSM 산출</b><span>조밀 점군 → DSM → 정사보정 (비동기)</span></div><span class="status info" id="pa-s4">대기</span></div>
+            </div>
+            <div id="pa-result" style="display:none;margin-top:12px">
+              <table>
+                <tbody>
+                  <tr><th>최종 정합 오차(검사점 RMSE)</th><td id="pa-rmse">—</td></tr>
+                  <tr><th>5cm 판정</th><td id="pa-judge">—</td></tr>
+                  <tr><th>산출물</th><td id="pa-products">—</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div class="card span-6">
+          <div class="card span-4">
             <h2>작업자에게 필요한 분석 요약</h2>
             <table>
               <tbody>
@@ -612,6 +712,84 @@
                 <tr><th>관리자 확인 필요</th><td>기준자료 변경 없음</td></tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="card span-12">
+            <div class="card-head">
+              <h2>정밀 분석 결과 시각화</h2>
+              <span class="tag">R-20260617-03 · OO해수욕장</span>
+            </div>
+            <p class="sub">원본 정밀 분석 산출물을 지도에서 확인합니다. 레이어를 전환해 정사영상·DSM 표고·검사점 오차를 봅니다.</p>
+            <div class="seg-group" id="viz-tabs" style="margin-bottom:12px">
+              <button class="seg active" data-layer="ortho" onclick="setVizLayer('ortho')">정사영상</button>
+              <button class="seg" data-layer="dsm" onclick="setVizLayer('dsm')">DSM (표고)</button>
+              <button class="seg" data-layer="cp" onclick="setVizLayer('cp')">검사점 오차</button>
+            </div>
+
+            <!-- 정사영상 -->
+            <div id="viz-ortho">
+              <svg viewBox="0 0 640 260" width="100%" style="display:block;width:100%;border:1px solid var(--line);border-radius:10px;background:#dfeaf0" role="img" aria-label="정사영상">
+                <path d="M0,140 C120,120 240,160 360,140 C480,120 560,155 640,140 L640,260 L0,260 Z" fill="#e3ddcb"/>
+                <path d="M0,140 C120,120 240,160 360,140 C480,120 560,155 640,140" fill="none" stroke="#b9b08f" stroke-width="2"/>
+                <g opacity="0.85">
+                  <ellipse cx="120" cy="205" rx="44" ry="18" fill="#cbd4ab"/>
+                  <ellipse cx="300" cy="222" rx="58" ry="20" fill="#c2cda0"/>
+                  <ellipse cx="500" cy="210" rx="46" ry="16" fill="#cbd4ab"/>
+                  <rect x="404" y="176" width="34" height="22" rx="3" fill="#cfc6b2" stroke="#a99f86"/>
+                  <rect x="446" y="182" width="20" height="16" rx="2" fill="#cfc6b2" stroke="#a99f86"/>
+                </g>
+                <g fill="#1565a0"><circle cx="60" cy="158" r="2.2"/><circle cx="150" cy="150" r="2.2"/><circle cx="250" cy="166" r="2.2"/><circle cx="360" cy="152" r="2.2"/><circle cx="470" cy="150" r="2.2"/><circle cx="560" cy="156" r="2.2"/></g>
+                <rect x="10" y="226" width="220" height="22" rx="5" fill="#ffffff" opacity="0.85"/>
+                <text x="20" y="241" fill="#3f4a54" font-size="11" font-weight="800" font-family="sans-serif">정사영상 (Orthomosaic) · GSD 2.4cm</text>
+              </svg>
+            </div>
+
+            <!-- DSM -->
+            <div id="viz-dsm" style="display:none">
+              <svg viewBox="0 0 640 260" width="100%" style="display:block;width:100%;border:1px solid var(--line);border-radius:10px;background:#ccd9df" role="img" aria-label="DSM 표고">
+                <defs>
+                  <linearGradient id="dsmGrad" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="260">
+                    <stop offset="0" stop-color="#2c7fb8"/><stop offset="0.35" stop-color="#a6d96a"/><stop offset="0.7" stop-color="#fdae61"/><stop offset="1" stop-color="#d7301f"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,140 C120,120 240,160 360,140 C480,120 560,155 640,140 L640,260 L0,260 Z" fill="url(#dsmGrad)"/>
+                <g fill="none" stroke="#00000026" stroke-width="1">
+                  <path d="M0,170 C120,150 240,190 360,170 C480,150 560,185 640,170"/>
+                  <path d="M0,200 C120,180 240,220 360,200 C480,180 560,215 640,200"/>
+                  <path d="M0,230 C120,210 240,250 360,230 C480,210 560,245 640,230"/>
+                </g>
+                <path d="M0,140 C120,120 240,160 360,140 C480,120 560,155 640,140" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+                <rect x="10" y="226" width="150" height="22" rx="5" fill="#ffffff" opacity="0.88"/>
+                <text x="20" y="241" fill="#3f4a54" font-size="11" font-weight="800" font-family="sans-serif">DSM (수치표면모델)</text>
+              </svg>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)">
+                <span>표고 낮음</span>
+                <div style="flex:1;max-width:240px;height:10px;border-radius:999px;background:linear-gradient(90deg,#2c7fb8,#a6d96a,#fdae61,#d7301f)"></div>
+                <span>높음</span>
+                <span style="margin-left:auto">−0.2 ~ 8.6 m</span>
+              </div>
+            </div>
+
+            <!-- 검사점 오차 -->
+            <div id="viz-cp" style="display:none">
+              <svg viewBox="0 0 640 260" width="100%" style="display:block;width:100%;border:1px solid var(--line);border-radius:10px;background:#eef4f5" role="img" aria-label="검사점 오차">
+                <path d="M0,140 C120,120 240,160 360,140 C480,120 560,155 640,140 L640,260 L0,260 Z" fill="#e7eef0"/>
+                <path d="M0,140 C120,120 240,160 360,140 C480,120 560,155 640,140" fill="none" stroke="#b9c4c9" stroke-width="2"/>
+                <g font-family="sans-serif" font-size="10" font-weight="800">
+                  <g><rect x="104" y="184" width="12" height="12" transform="rotate(45 110 190)" fill="none" stroke="#1d9268" stroke-width="2.2"/><text x="120" y="193" fill="#1d9268">CP-1 3.2cm</text></g>
+                  <g><rect x="244" y="204" width="12" height="12" transform="rotate(45 250 210)" fill="none" stroke="#1d9268" stroke-width="2.2"/><text x="260" y="213" fill="#1d9268">CP-2 4.6cm</text></g>
+                  <g><rect x="384" y="179" width="12" height="12" transform="rotate(45 390 185)" fill="none" stroke="#b07d18" stroke-width="2.2"/><text x="400" y="188" fill="#b07d18">CP-3 5.4cm</text></g>
+                  <g><rect x="504" y="199" width="12" height="12" transform="rotate(45 510 205)" fill="none" stroke="#1d9268" stroke-width="2.2"/><text x="520" y="208" fill="#1d9268">CP-4 3.9cm</text></g>
+                  <g><rect x="566" y="164" width="12" height="12" transform="rotate(45 572 170)" fill="none" stroke="#1d9268" stroke-width="2.2"/><text x="500" y="158" fill="#1d9268">CP-5 4.1cm</text></g>
+                </g>
+                <g font-family="sans-serif" font-size="10" font-weight="700">
+                  <rect x="10" y="10" width="160" height="40" rx="6" fill="#ffffff" opacity="0.9" stroke="#d8dee4"/>
+                  <rect x="19" y="19" width="9" height="9" transform="rotate(45 23.5 23.5)" fill="none" stroke="#1d9268" stroke-width="2"/><text x="36" y="27" fill="#3f4a54">≤ 5cm 적합</text>
+                  <rect x="19" y="34" width="9" height="9" transform="rotate(45 23.5 38.5)" fill="none" stroke="#b07d18" stroke-width="2"/><text x="36" y="42" fill="#3f4a54">&gt; 5cm 초과</text>
+                </g>
+              </svg>
+              <div style="margin-top:8px;font-size:12px;color:var(--muted)">검사점 5점 · <b style="color:var(--text)">RMSE 4.1cm</b> (≤ 5cm 적합) · CP-3만 기준 근접</div>
+            </div>
           </div>
         </div>
       </section>
@@ -624,7 +802,7 @@
           <div class="page-title">
             <div>
               <h1>리포트</h1>
-              <p>배정 프로젝트를 게시판처럼 열어 회차별 결과 문서를 조회·다운로드합니다. 권한이 있는 프로젝트만 보입니다.</p>
+              <p>배정 프로젝트 목록에서 진입해 회차별 결과 문서를 조회·다운로드합니다. 권한이 있는 프로젝트만 보입니다.</p>
             </div>
           </div>
 
@@ -687,7 +865,7 @@
                   <tr><th>기본 정보</th><td>프로젝트, 현장, 회차, 작업자, 장비, 촬영 조건</td></tr>
                   <tr><th>검증 정보</th><td>기준자료 버전, 검사점, 오차, 지연시간</td></tr>
                   <tr><th>현장 판단</th><td>누락 영역, 재촬영 필요 여부, 특이사항</td></tr>
-                  <tr><th>첨부</th><td>경량 커버리지 맵, 정사영상, 처리 로그</td></tr>
+                  <tr><th>첨부</th><td>경량 커버리지 맵, 정사영상·DSM, 처리 로그</td></tr>
                 </tbody>
               </table>
             </div>
@@ -849,53 +1027,130 @@
       closePicker();
     }
 
-    // ---------- 드론 측량: 회차 생성·업로드 흐름 ----------
-    const uplState = { name: false, picked: false };
-
-    function uplCreate() {
-      const v = document.getElementById("us-name").value.trim();
-      if (!v) { alert("회차 명칭을 입력하세요."); return; }
-      uplState.name = true;
-      const st = document.getElementById("us-create-st");
-      st.textContent = "완료"; st.className = "status ok";
+    // ---------- 드론 측량: 현장 고정 기준자료 모드(기존/신규) ----------
+    function siteMode(mode) {
+      document.querySelectorAll("#survey-mode .seg").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+      const fields = document.getElementById("survey-fields");
+      const hint = document.getElementById("site-mode-hint");
+      const gcpReuse = document.getElementById("gcp-reuse-mode");
+      const gcpRtk = document.getElementById("gcp-rtk-mode");
+      const gcpHint = document.getElementById("gcp-mode-hint");
+      const gcpNotice = document.getElementById("gcp-mode-notice");
+      const rtkPanel = document.getElementById("rtk-register-panel");
+      const setText = (id, value) => { document.getElementById(id).textContent = value; };
+      if (mode === "existing") {
+        fields.classList.add("locked");
+        rtkPanel.style.display = "none";
+        hint.textContent = "기존 현장(OO해수욕장 v2)의 좌표계·기준점(수준점)·반영구 고정점·기준 정사영상·특징점을 그대로 사용합니다. 같은 날 이전 회차 GCP도 함께 적용됩니다.";
+        gcpReuse.classList.add("active");
+        gcpRtk.classList.remove("active");
+        gcpHint.textContent = "기존 현장 기준자료 사용 시 같은 날 이전 회차 GCP·검사점이 자동 적용됩니다.";
+        setText("gcp-field-1-label", "재사용 기준 회차");
+        setText("gcp-field-1-value", "R-20260617-03 · OO해수욕장");
+        setText("gcp-field-2-label", "GCP·검사점 구성");
+        setText("gcp-field-2-value", "GCP 4점 이상 · 검사점 3점 이상 (GCP와 분리)");
+        setText("gcp-field-3-label", "재사용 조건");
+        setText("gcp-field-3-value", "같은 날짜 · 같은 현장 · 마커 위치 변동 없음");
+        gcpNotice.innerHTML = "기존 현장 기준자료를 쓰는 같은 날 반복 비행은 <b>이전 회차 GCP·검사점</b>을 재사용합니다. 날짜가 바뀌거나 표식 이동·유실이 있으면 신규 기준자료 등록 또는 새 RTK 실측으로 전환합니다.";
+      } else {
+        fields.classList.remove("locked");
+        rtkPanel.style.display = "block";
+        hint.textContent = "새 현장의 좌표계·기준점(수준점) 처리·반영구 고정점·기준 정사영상·특징점을 최초 등록합니다. 이번 회차 GCP·검사점은 새로 RTK 실측합니다.";
+        gcpReuse.classList.remove("active");
+        gcpRtk.classList.add("active");
+        gcpHint.textContent = "신규 현장 기준자료 등록 시 이전 회차 GCP가 없으므로 이번 회차 GCP·검사점을 새로 RTK 실측합니다.";
+        setText("gcp-field-1-label", "RTK 실측 대상");
+        setText("gcp-field-1-value", "GCP 4점 이상 · 검사점 3점 이상");
+        setText("gcp-field-2-label", "입력자료");
+        setText("gcp-field-2-value", "RTK 측량자료 · 기본수준점값");
+        setText("gcp-field-3-label", "산출결과");
+        setText("gcp-field-3-value", "GCP·검사점 좌표표 자동 생성");
+        gcpNotice.innerHTML = "신규 현장 기준자료를 등록하는 경우 <b>RTK 측량자료와 기본수준점값</b>을 입력하고, 시스템이 산출한 GCP·검사점 좌표표를 이번 회차 정합에 사용합니다. 이후 같은 날 추가 회차부터는 산출 좌표표를 재사용할 수 있습니다.";
+      }
     }
 
-    function uplPick(type) {
-      uplState.picked = true;
-      document.getElementById("us-pick-info").textContent =
-        type === "folder" ? "폴더 1개 · 촬영 418장 선택됨" : "파일 418개 선택됨";
-      const st = document.getElementById("us-pick-st");
-      st.textContent = "완료"; st.className = "status ok";
+    // ---------- 드론 측량: 회차 모드(새/기존) ----------
+    function runMode(mode) {
+      document.getElementById("run-new-mode").classList.toggle("active", mode === "new");
+      document.getElementById("run-exist-mode").classList.toggle("active", mode === "exist");
+      document.getElementById("run-new-fields").style.display = mode === "new" ? "" : "none";
+      document.getElementById("run-exist-fields").style.display = mode === "exist" ? "" : "none";
     }
 
-    function uplRamp(barId, pctId, target, done) {
-      let v = 0;
-      const bar = document.getElementById(barId), p = document.getElementById(pctId);
+    // ---------- 드론 측량: 소티 업로드 ----------
+    let sorties = [];
+    let sortieSeq = 0;
+
+    function renderSorties() {
+      const el = document.getElementById("sortie-list");
+      if (!sorties.length) {
+        el.innerHTML = '<div class="hint" style="color:var(--muted);font-size:12px">“+ 소티 추가”를 눌러 첫 비행 분량을 첨부하세요.</div>';
+        return;
+      }
+      el.innerHTML = sorties.map(s =>
+        '<div class="sortie-row" data-id="' + s.id + '">' +
+          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+            '<b style="min-width:50px">소티 ' + s.no + '</b>' +
+            '<button class="button sm" onclick="sortiePick(' + s.id + ',\'file\')">파일</button>' +
+            '<button class="button sm" onclick="sortiePick(' + s.id + ',\'folder\')">폴더</button>' +
+            '<span style="color:var(--muted);font-size:12px">' + (s.files || '미선택') + '</span>' +
+            '<button class="button sm" style="margin-left:auto;border-color:var(--red);color:var(--red)" onclick="removeSortie(' + s.id + ')">−</button>' +
+          '</div>' +
+          '<div class="sortie-prog"><span>경량화</span><div class="track"><div class="fill lt-bar" style="--w:' + s.light + '%"></div></div><b class="lt-pct">' + (s.light >= 100 ? "완료" : s.light + "%") + '</b></div>' +
+          '<div class="sortie-prog"><span>원본</span><div class="track"><div class="fill blue og-bar" style="--w:' + s.orig + '%"></div></div><b class="og-pct">' + (s.orig >= 100 ? "완료" : s.orig + "%") + '</b></div>' +
+        '</div>'
+      ).join("");
+    }
+
+    function addSortie() {
+      sortieSeq++;
+      sorties.push({ id: sortieSeq, no: sorties.length + 1, files: "", light: 0, orig: 0 });
+      renderSorties();
+    }
+
+    function removeSortie(id) {
+      sorties = sorties.filter(s => s.id !== id);
+      sorties.forEach((s, i) => s.no = i + 1);
+      renderSorties();
+    }
+
+    function sortiePick(id, type) {
+      const s = sorties.find(x => x.id === id);
+      if (!s) return;
+      const n = 180 + Math.floor(Math.random() * 80);
+      s.files = (type === "folder" ? "폴더 1개 · " : "") + "촬영 " + n + "장";
+      s.light = 0; s.orig = 0;
+      renderSorties();
+      sortieRamp(id, "light", 100);
+      sortieRamp(id, "orig", 100);
+    }
+
+    function sortieRamp(id, key, target) {
       const t = setInterval(() => {
-        v += 4;
-        if (v >= target) { v = target; clearInterval(t); if (done) setTimeout(done, 250); }
-        bar.style.setProperty("--w", v + "%");
-        p.textContent = v + "%";
-      }, 40);
+        const s = sorties.find(x => x.id === id);
+        const row = document.querySelector('.sortie-row[data-id="' + id + '"]');
+        if (!s || !row) { clearInterval(t); return; }
+        s[key] = Math.min(target, s[key] + 5);
+        const bar = row.querySelector(key === "light" ? ".lt-bar" : ".og-bar");
+        const pct = row.querySelector(key === "light" ? ".lt-pct" : ".og-pct");
+        bar.style.setProperty("--w", s[key] + "%");
+        pct.textContent = s[key] >= target ? "완료" : s[key] + "%";
+        if (s[key] >= target) clearInterval(t);
+      }, 45);
     }
 
-    function uplStart() {
-      if (!uplState.name) { alert("먼저 회차를 생성하세요."); return; }
-      if (!uplState.picked) { alert("파일 또는 폴더를 선택하세요."); return; }
-      const btn = document.getElementById("us-start");
-      btn.disabled = true; btn.textContent = "업로드 중…";
-      const ss = document.getElementById("us-start-st");
-      ss.textContent = "진행 중"; ss.className = "status info";
-      uplRamp("us-light-bar", "us-light-pct", 100, () => {
-        document.getElementById("us-light-pct").textContent = "완료";
-        uplRamp("us-fast-bar", "us-fast-pct", 100, () => {
-          document.getElementById("us-fast-pct").textContent = "적합";
-          uplRamp("us-orig-bar", "us-orig-pct", 82, () => {
-            document.getElementById("us-orig-pct").textContent = "82%";
-            ss.textContent = "원본 진행 중"; ss.className = "status info";
-          });
-        });
-      });
+    function runVerify() {
+      const done = sorties.filter(s => s.light >= 100);
+      if (!done.length) { alert("먼저 소티를 추가하고 파일을 첨부하세요."); return; }
+      const multi = done.length >= 2;
+      document.getElementById("vr-sorties").textContent = done.length + "개 (경량화 완료)";
+      document.getElementById("vr-files").textContent = "촬영 약 " + (done.length * 200) + "장 · 체크섬 일치";
+      document.getElementById("vr-cov").textContent = multi ? "계획 범위 대비 95%" : "계획 범위 대비 58%";
+      document.getElementById("vr-miss").textContent = multi ? "북동쪽 1개 구간 후보" : "남측·북동 미촬영";
+      document.getElementById("vr-judge").innerHTML = multi ? '<span class="status ok">필수 아님</span>' : '<span class="status warn">소티 추가 권고</span>';
+      document.getElementById("verify-result").style.display = "";
+      const st = document.getElementById("verify-st");
+      st.textContent = "완료"; st.className = "status ok";
     }
 
     // ---------- 분석: 프로젝트→현장→회차 ----------
@@ -908,6 +1163,38 @@
       const proj = document.getElementById("an-project").value;
       const site = document.getElementById("an-site").value;
       document.getElementById("an-round").innerHTML = opts(myProjects[proj].rounds[site] || []);
+    }
+
+    // ---------- 분석: 원본 정밀 분석 실행 ----------
+    function runPrecise() {
+      const btn = document.getElementById("pa-run");
+      btn.disabled = true; btn.textContent = "분석 중…";
+      const top = document.getElementById("pa-st");
+      top.textContent = "진행 중"; top.className = "status info";
+      const steps = ["pa-s1", "pa-s2", "pa-s3", "pa-s4"];
+      let i = 0;
+      (function next() {
+        if (i > 0) { const p = document.getElementById(steps[i - 1]); p.textContent = "완료"; p.className = "status ok"; }
+        if (i < steps.length) {
+          const s = document.getElementById(steps[i]); s.textContent = "진행 중"; s.className = "status info";
+          i++; setTimeout(next, 900);
+        } else {
+          document.getElementById("pa-rmse").textContent = "4.1cm";
+          document.getElementById("pa-judge").innerHTML = '<span class="status ok">적합 (≤ 5cm)</span>';
+          document.getElementById("pa-products").innerHTML = '정사영상 · DSM · 점군 · 오차 리포트 <button class="button sm" style="margin-left:6px" onclick="alert(\'산출물 다운로드 — 목업\')">다운로드</button>';
+          document.getElementById("pa-result").style.display = "";
+          top.textContent = "완료"; top.className = "status ok";
+          btn.textContent = "분석 완료";
+        }
+      })();
+    }
+
+    // ---------- 분석: 결과 시각화 레이어 ----------
+    function setVizLayer(layer) {
+      ["ortho", "dsm", "cp"].forEach(l => {
+        document.getElementById("viz-" + l).style.display = (l === layer) ? "" : "none";
+      });
+      document.querySelectorAll("#viz-tabs .seg").forEach(b => b.classList.toggle("active", b.dataset.layer === layer));
     }
 
     // ---------- 리포트 목록/상세 ----------
@@ -1023,6 +1310,9 @@
     document.getElementById("an-project").innerHTML = projOptions();
     svSite = myProjects[svProj].sites[0];
     updateSurveyLabels();
+    siteMode("existing");
+    runMode("new");
+    addSortie();
     fillAnalysisSites();
     showReportsList();
     document.getElementById("picker").addEventListener("click", e => { if (e.target.id === "picker") closePicker(); });

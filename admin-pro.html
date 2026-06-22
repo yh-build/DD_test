@@ -159,6 +159,16 @@
     .image-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .thumb{aspect-ratio:4/3;border:1px solid var(--line);border-radius:10px;background:linear-gradient(135deg,rgba(62,200,230,.18),rgba(31,143,191,.08)),repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 14px,rgba(255,255,255,.02) 14px 28px);display:flex;align-items:end;padding:8px;color:#cfe0ea;font-size:12px;font-weight:700}
 
+    .seg-group{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+    .seg{border:0;background:transparent;padding:9px 16px;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit}
+    .seg+.seg{border-left:1px solid var(--line)}
+    .seg.active{background:var(--primary-soft);color:var(--primary)}
+    .locked{opacity:.55;pointer-events:none}
+    .locked .fake-input{background:rgba(255,255,255,.02)}
+    .sortie-row{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);padding:11px;margin-bottom:8px}
+    .sortie-row .track{height:9px}
+    .sortie-prog{display:grid;grid-template-columns:58px 1fr 42px;gap:8px;align-items:center;margin-top:7px;font-size:12px;color:var(--muted)}
+
     @media (max-width:980px){.span-3,.span-4,.span-5,.span-6,.span-7,.span-8{grid-column:span 12}.select-row,.form-grid{grid-template-columns:1fr 1fr}}
     @media (max-width:760px){.topbar-row{flex-wrap:nowrap}.brand>div:not(.mark){display:none}.user-chip{font-size:0;gap:0;padding:5px}.user-chip .avatar{font-size:11px}.nav .lbl{display:none}.nav button{padding:9px;min-width:40px}}
     @media (max-width:720px){.card>div[style*="1fr 1fr"]{grid-template-columns:1fr !important}}
@@ -173,7 +183,7 @@
   <section class="login">
     <div class="login-panel">
       <h1>DroneDocking</h1>
-      <p>관리자용 목업입니다. 회사 관리자로 로그인하면 프로젝트 생성, 현장·기준자료 등록, 참여자 권한 부여, 전체 분석·리포트를 관리합니다.</p>
+      <p>관리자용 목업입니다. 회사 관리자로 로그인하면 프로젝트 생성, 현장·기준자료 검수, 참여자 권한 부여, 분석 현황·리포트를 관리합니다.</p>
       <div class="field">
         <label>아이디</label>
         <div class="fake-input">admin01@miraeocean.com</div>
@@ -184,7 +194,7 @@
       </div>
       <button class="button primary" style="width: 100%;" onclick="login()">로그인</button>
       <div class="login-foot">
-        <a onclick="alert('회원가입 화면(별도): 회사 관리자 계정을 먼저 만들고, 이후 관리자가 프로젝트 권한을 부여합니다.')">회사 관리자 회원가입</a>
+        <a onclick="alert('회사 워크스페이스 생성 요청 화면(별도): 최초 관리자 계정은 별도 승인 후 발급됩니다.')">회사 워크스페이스 생성 요청</a>
         <a onclick="alert('비밀번호 찾기 화면(별도): 가입 이메일로 재설정 링크를 보냅니다.')">비밀번호 찾기</a>
       </div>
     </div>
@@ -299,7 +309,7 @@
           <div class="page-title">
             <div>
               <h1>프로젝트 관리</h1>
-              <p>프로젝트를 게시판처럼 관리합니다. 행을 누르면 해당 프로젝트로 들어가 현장 추가·기준자료 등록·참여자 배정을 진행합니다.</p>
+              <p>프로젝트 목록에서 항목을 선택하면 해당 프로젝트 상세로 들어가 현장 추가·기준자료 검수·참여자 배정을 진행합니다.</p>
             </div>
             <button class="button primary" onclick="openModal('new-project')">+ 프로젝트 생성</button>
           </div>
@@ -374,14 +384,15 @@
 
               <div class="card span-12">
                 <h2>현장 추가 · 기준자료 등록</h2>
-                <p class="sub">현장 추가 버튼을 누르면 이 입력 영역이 열립니다. 회차가 바뀌어도 기준자료는 현장 기준으로 버전 관리합니다.</p>
+                <p class="sub">현장 등록·기준자료는 <b>현장 작업자도</b> 수행하며, 관리자는 여기서 검수·승인합니다. 현장에는 좌표계·기준점(수준점) 성과·반영구 고정점·기준 정사영상/DSM·특징점 등 <b>변하지 않는 기준</b>만 등록하고, 회차별 GCP·검사점 실측은 드론 측량 화면에서 입력합니다(같은 날은 GCP 재사용, 날짜가 바뀌면 재측량). 기준자료는 현장 기준으로 버전 관리합니다.</p>
                 <div class="form-grid">
                   <div class="field"><label>소속 프로젝트</label><div class="fake-input" id="site-project">2026 TRL점프업 연안침식 PoC</div></div>
                   <div class="field"><label>현장명</label><div class="fake-input">OO해수욕장</div></div>
                   <div class="field"><label>좌표계</label><div class="fake-input">EPSG:5186</div></div>
-                  <div class="field"><label>GCP 기준점</label><div class="fake-input">GCP 목록 CSV 등록</div></div>
+                  <div class="field"><label>기준점·수준점 성과</label><div class="fake-input">국가수준점·지오이드 모델 등록 (정표고 기준)</div></div>
+                  <div class="field"><label>반영구 고정점(상시 GCP)</label><div class="fake-input">고정점 좌표 CSV 등록 · 회차 GCP는 측량 시 입력</div></div>
                   <div class="field"><label>PPK/RTK 기준국</label><div class="fake-input">기준국 좌표 및 안테나고 등록</div></div>
-                  <div class="field"><label>기준 정사영상</label><div class="fake-input">GeoTIFF 또는 타일 세트 등록</div></div>
+                  <div class="field"><label>기준 정사영상 / DSM</label><div class="fake-input">기준 GeoTIFF(정사영상·DSM) 또는 타일 세트 등록</div></div>
                   <div class="field"><label>특징점 자료</label><div class="fake-input">육지부 Feature Point 목록 등록</div></div>
                   <div class="field"><label>기준자료 버전</label><div class="fake-input">v1 · 2026-06-17부터 적용</div></div>
                   <div class="field"><label>기준자료 검증 상태</label><div class="fake-input">관리자 확인 필요</div></div>
@@ -410,22 +421,25 @@
         </div>
       </section>
 
-      <!-- ============ 전체 분석 ============ -->
+      <!-- ============ 분석 현황 ============ -->
       <section class="page" id="page-analysis">
         <div class="page-title">
           <div>
             <h1>분석 현황</h1>
-            <p>관리자는 전체 프로젝트-현장 단위로 원본 업로드, 정밀 정합, 최종 5cm 검증 상태를 봅니다.</p>
+            <p>전체 집계와 프로젝트별 현황을 전환해 원본 업로드·정밀 정합·5cm 검증·KPI 달성을 봅니다.</p>
           </div>
         </div>
 
         <div class="grid">
           <div class="card span-12">
-            <h2>전체 프로젝트-현장 필터</h2>
-            <div class="select-row">
-              <div class="select-box"><span>프로젝트</span><b>전체 프로젝트</b></div>
-              <div class="select-box"><span>현장</span><b>전체 현장</b></div>
-              <div class="select-box"><span>회차 상태</span><b>관리 필요 우선</b></div>
+            <div class="card-head">
+              <h2>분석 범위</h2>
+              <span class="tag" id="an-scope-tag">전체 프로젝트</span>
+            </div>
+            <p class="sub">전체 집계 또는 프로젝트를 선택하면 그 프로젝트의 드론 측량·분석 상세까지 봅니다.</p>
+            <div class="select-box" style="max-width:440px">
+              <span>프로젝트</span>
+              <select class="real-select" id="an-scope-select" onchange="setAnalysisScope(this.value)"></select>
             </div>
           </div>
 
@@ -434,32 +448,31 @@
               <h2>시스템 성능지표 달성 현황</h2>
               <span class="tag">계획서 1단계 KPI · 정밀정합 완료 회차 집계</span>
             </div>
-            <p class="sub">현장 재촬영 판정과 별개로, 원본 정밀정합이 끝난 회차를 모아 계획서 1단계 성능지표(5cm·3초·성공률) 달성률을 집계합니다. TTA 공인시험·외부 전문가 검토 증빙의 기준입니다.</p>
-            <div class="chart">
-              <div class="bar"><span>5cm 이내</span><div class="track"><div class="fill green" style="--w: 81%;"></div></div><b>81%</b></div>
-              <div class="bar"><span>3초 이내</span><div class="track"><div class="fill green" style="--w: 86%;"></div></div><b>86%</b></div>
-              <div class="bar"><span>동시 만족</span><div class="track"><div class="fill amber" style="--w: 84%;"></div></div><b>84%</b></div>
-              <div class="bar"><span>TTA 반복</span><div class="track"><div class="fill blue" style="--w: 60%;"></div></div><b>12/20회</b></div>
-            </div>
+            <p class="sub">현장 재촬영 판정과 별개로, 원본 정밀정합이 끝난 회차를 모아 계획서 1단계 성능지표(5cm·3초)와 내부 성공률을 집계합니다. TTA 공인시험·외부 전문가 검토 증빙의 기준입니다.</p>
+            <div class="chart" id="an-kpi-chart"></div>
             <table style="margin-top:14px">
               <thead><tr><th>성능지표</th><th>목표치(계획서)</th><th>현재</th><th>달성</th></tr></thead>
-              <tbody>
-                <tr><td>위치 정합 오차</td><td>5cm 이하</td><td>평균 3.8cm · PASS 81%</td><td><span class="status ok">충족</span></td></tr>
-                <tr><td>실시간 처리 지연</td><td>3초 이하</td><td>평균 2.4초 · PASS 86%</td><td><span class="status ok">충족</span></td></tr>
-                <tr><td>현장 테스트 성공률</td><td>90% 이상</td><td>84% (오차·지연 동시 만족)</td><td><span class="status warn">목표 근접</span></td></tr>
-              </tbody>
+              <tbody id="an-kpi-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="card span-12" id="an-drone-card" style="display:none">
+            <div class="card-head">
+              <h2>드론 측량 현황 <span class="status soft" style="vertical-align:middle">작업자 작업</span></h2>
+              <span class="tag">회차 · 소티</span>
+            </div>
+            <p class="sub">작업자가 현장에서 수행한 회차·소티 업로드, 커버리지·누락, 재촬영 판정입니다. (분석 처리는 아래 표)</p>
+            <table>
+              <thead><tr><th>회차</th><th>현장</th><th>작업자</th><th>소티</th><th>커버리지</th><th>누락</th><th>재촬영 판정</th></tr></thead>
+              <tbody id="an-drone"></tbody>
             </table>
           </div>
 
           <div class="card span-12">
-            <h2>분석 처리 목록</h2>
+            <h2>분석 처리 목록 <span class="status info" style="vertical-align:middle">정밀 분석</span></h2>
             <table>
               <thead><tr><th>프로젝트</th><th>현장</th><th>회차</th><th>작업자</th><th>원본</th><th>정밀 정합</th><th>최종 오차</th><th>관리 판단</th></tr></thead>
-              <tbody>
-                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>OO해수욕장</td><td>R-20260617-04</td><td>김작업</td><td><span class="status info">82%</span></td><td><span class="status info">대기</span></td><td>예상 3.6cm</td><td><span class="status ok">진행 가능</span></td></tr>
-                <tr><td>2026 TRL점프업 연안침식 PoC</td><td>YY해안</td><td>R-20260617-01</td><td>박작업</td><td><span class="status ok">완료</span></td><td><span class="status ok">완료</span></td><td>4.3cm</td><td><span class="status ok">최종 적합</span></td></tr>
-                <tr><td>2026 연안침식 예비 실증</td><td>XX갯벌</td><td>R-20260616-02</td><td>최작업</td><td><span class="status warn">재개 대기</span></td><td><span class="status info">보류</span></td><td>5.8cm</td><td><span class="status warn">재촬영 검토</span></td></tr>
-              </tbody>
+              <tbody id="an-rows"></tbody>
             </table>
           </div>
 
@@ -475,12 +488,7 @@
           <div class="card span-6">
             <h2>관리자 확인 항목</h2>
             <table>
-              <tbody>
-                <tr><th>오차 초과</th><td>XX갯벌 R-20260616-02 · 5.8cm</td></tr>
-                <tr><th>원본 중단</th><td>2건 · 브라우저 재접속 필요</td></tr>
-                <tr><th>기준자료 검토</th><td>AA항만 기준자료 v1 승인 필요</td></tr>
-                <tr><th>TTA 검증 후보</th><td>OO해수욕장 20회 반복 중 12회 완료</td></tr>
-              </tbody>
+              <tbody id="an-checks"></tbody>
             </table>
           </div>
         </div>
@@ -494,7 +502,7 @@
           <div class="page-title">
             <div>
               <h1>리포트</h1>
-              <p>작업자와 동일하게 프로젝트를 게시판처럼 열어 리포트를 조회·다운로드합니다. 관리자는 모든 프로젝트의 리포트를 볼 수 있습니다.</p>
+              <p>작업자와 동일하게 프로젝트 목록에서 진입해 리포트를 조회·다운로드합니다. 관리자는 모든 프로젝트의 리포트를 볼 수 있습니다.</p>
             </div>
           </div>
 
@@ -728,13 +736,13 @@
   <div class="modal-back" id="modal-new-site">
     <div class="modal">
       <h3>현장 추가</h3>
-      <p class="sub">선택한 프로젝트에 현장을 추가하고 기준자료를 등록합니다.</p>
+      <p class="sub">선택한 프로젝트에 현장과 고정 기준자료를 등록합니다. 회차 GCP·검사점은 드론 측량 시 입력합니다.</p>
       <div class="field"><label>소속 프로젝트</label><div class="fake-input" id="modal-site-project">2026 TRL점프업 연안침식 PoC</div></div>
       <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
         <div class="field"><label>현장명</label><div class="fake-input">새 현장</div></div>
         <div class="field"><label>좌표계</label><div class="fake-input">EPSG:5186</div></div>
       </div>
-      <div class="field"><label>기준자료</label><div class="fake-input">GCP·기준국·정사영상·특징점 등록</div></div>
+      <div class="field"><label>고정 기준자료</label><div class="fake-input">수준점 성과·고정점·기준국·정사영상/DSM·특징점 등록</div></div>
       <div class="actions">
         <button class="button ghost" onclick="closeModal()">취소</button>
         <button class="button primary" onclick="closeModal()">현장 저장</button>
@@ -994,9 +1002,122 @@
     function closeModal() { document.querySelectorAll(".modal-back").forEach(m => m.classList.remove("open")); }
     document.querySelectorAll(".modal-back").forEach(m => m.addEventListener("click", e => { if (e.target === m) closeModal(); }));
 
+    // ---------- 분석 현황: 전체/프로젝트별 ----------
+    const analysisData = {
+      all: {
+        tag: "전체 프로젝트",
+        kpi: [["5cm 이내","green",81,"81%"],["3초 이내","green",86,"86%"],["동시 만족","amber",84,"84%"],["TTA 반복","blue",60,"12/20회"]],
+        table: [
+          ["위치 정합 오차","5cm 이하","평균 3.8cm · PASS 81%",["충족","ok"]],
+          ["실시간 처리 지연","3초 이하","평균 2.4초 · PASS 86%",["충족","ok"]],
+          ["내부 현장 테스트 성공률","90% 이상","84% (오차·지연 동시 만족)",["목표 근접","warn"]]
+        ],
+        rows: [
+          ["2026 TRL점프업 연안침식 PoC","OO해수욕장","R-20260617-04","김작업",["82%","info"],["대기","info"],"예상 3.6cm",["진행 가능","ok"]],
+          ["2026 TRL점프업 연안침식 PoC","YY해안","R-20260617-01","박작업",["완료","ok"],["완료","ok"],"4.3cm",["최종 적합","ok"]],
+          ["2026 연안침식 예비 실증","XX갯벌","R-20260616-02","최작업",["재개 대기","warn"],["보류","info"],"5.8cm",["재촬영 검토","warn"]]
+        ],
+        checks: [
+          ["오차 초과","XX갯벌 R-20260616-02 · 5.8cm"],
+          ["원본 중단","2건 · 브라우저 재접속 필요"],
+          ["기준자료 검토","AA항만 기준자료 v1 승인 필요"],
+          ["TTA 검증 후보","OO해수욕장 20회 반복 중 12회 완료"],
+          ["표준 산출물",'오차 리포트 · 정사영상 · DSM · 점군 <span class="status soft">원본 후 비동기</span>']
+        ]
+      },
+      p1: {
+        tag: "2026 TRL점프업 연안침식 PoC",
+        kpi: [["5cm 이내","green",88,"88%"],["3초 이내","green",90,"90%"],["동시 만족","green",86,"86%"],["TTA 반복","blue",60,"12/20회"]],
+        table: [
+          ["위치 정합 오차","5cm 이하","평균 3.9cm · PASS 88%",["충족","ok"]],
+          ["실시간 처리 지연","3초 이하","평균 2.3초 · PASS 90%",["충족","ok"]],
+          ["내부 현장 테스트 성공률","90% 이상","86%",["목표 근접","warn"]]
+        ],
+        rows: [
+          ["2026 TRL점프업 연안침식 PoC","OO해수욕장","R-20260617-04","김작업",["82%","info"],["대기","info"],"예상 3.6cm",["진행 가능","ok"]],
+          ["2026 TRL점프업 연안침식 PoC","YY해안","R-20260617-01","박작업",["완료","ok"],["완료","ok"],"4.3cm",["최종 적합","ok"]]
+        ],
+        checks: [
+          ["TTA 검증 후보","OO해수욕장 20회 반복 중 12회 완료"],
+          ["기준자료","현행 v2 · 변경 없음"],
+          ["표준 산출물",'정사영상 · DSM · 점군 <span class="status soft">원본 후 비동기</span>']
+        ]
+      },
+      p2: {
+        tag: "2026 연안침식 예비 실증",
+        kpi: [["5cm 이내","amber",60,"60%"],["3초 이내","green",80,"80%"],["동시 만족","amber",58,"58%"],["TTA 반복","blue",20,"4/20회"]],
+        table: [
+          ["위치 정합 오차","5cm 이하","평균 5.2cm · PASS 60%",["미달","bad"]],
+          ["실시간 처리 지연","3초 이하","평균 2.8초 · PASS 80%",["충족","ok"]],
+          ["내부 현장 테스트 성공률","90% 이상","58%",["미달","bad"]]
+        ],
+        rows: [
+          ["2026 연안침식 예비 실증","XX갯벌","R-20260616-02","최작업",["재개 대기","warn"],["보류","info"],"5.8cm",["재촬영 검토","warn"]]
+        ],
+        checks: [
+          ["오차 초과","XX갯벌 R-20260616-02 · 5.8cm"],
+          ["원본 중단","2건 · 브라우저 재접속 필요"],
+          ["조치","재촬영 또는 기준자료 점검 필요"]
+        ]
+      },
+      p3: {
+        tag: "2027 해안선 모니터링 사업화 사전검토",
+        kpi: [],
+        table: [],
+        rows: [],
+        checks: [
+          ["기준자료 검토","AA항만 기준자료 v1 승인 필요"],
+          ["상태","기준자료 등록 중 · 분석할 회차 없음"]
+        ]
+      }
+    };
+
+    const droneData = {
+      all: [],
+      p1: [
+        ["R-20260617-04","OO해수욕장","김작업","소티 2","95%","북동 1구간",["검토","warn"]],
+        ["R-20260617-01","YY해안","박작업","소티 1","98%","없음",["불필요","ok"]]
+      ],
+      p2: [
+        ["R-20260616-02","XX갯벌","최작업","소티 2","88%","남측 구간",["권고","warn"]]
+      ],
+      p3: []
+    };
+
+    function setAnalysisScope(scope) {
+      const d = analysisData[scope];
+      document.getElementById("an-scope-select").value = scope;
+      document.getElementById("an-scope-tag").textContent = d.tag;
+      document.getElementById("an-kpi-chart").innerHTML = d.kpi.length
+        ? d.kpi.map(k => '<div class="bar"><span>' + k[0] + '</span><div class="track"><div class="fill ' + k[1] + '" style="--w: ' + k[2] + '%;"></div></div><b>' + k[3] + '</b></div>').join("")
+        : '<p class="sub" style="margin:0">정밀정합 완료 회차가 없어 집계할 지표가 없습니다.</p>';
+      document.getElementById("an-kpi-tbody").innerHTML = d.table.length
+        ? d.table.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + pill(r[3]) + '</td></tr>').join("")
+        : '<tr><td colspan="4" style="color:var(--muted)">집계 데이터 없음</td></tr>';
+      document.getElementById("an-rows").innerHTML = d.rows.length
+        ? d.rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + pill(r[4]) + '</td><td>' + pill(r[5]) + '</td><td>' + r[6] + '</td><td>' + pill(r[7]) + '</td></tr>').join("")
+        : '<tr><td colspan="8" style="color:var(--muted)">아직 분석할 회차가 없습니다.</td></tr>';
+      document.getElementById("an-checks").innerHTML = d.checks.map(c => '<tr><th>' + c[0] + '</th><td>' + c[1] + '</td></tr>').join("");
+      // 드론 측량 현황 (프로젝트 선택 시만)
+      const dc = document.getElementById("an-drone-card");
+      if (scope === "all") {
+        dc.style.display = "none";
+      } else {
+        dc.style.display = "";
+        const dr = droneData[scope] || [];
+        document.getElementById("an-drone").innerHTML = dr.length
+          ? dr.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td><td>' + r[5] + '</td><td>' + pill(r[6]) + '</td></tr>').join("")
+          : '<tr><td colspan="7" style="color:var(--muted)">아직 회차가 없습니다.</td></tr>';
+      }
+    }
+
     // 초기 렌더
     showProjectsList();
     showReportsList();
+    document.getElementById("an-scope-select").innerHTML =
+      '<option value="all">전체 프로젝트</option>' +
+      Object.keys(projects).map(id => '<option value="' + id + '">' + projects[id].name + '</option>').join("");
+    setAnalysisScope("all");
   </script>
 </body>
 </html>
